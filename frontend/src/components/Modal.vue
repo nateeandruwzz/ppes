@@ -1,0 +1,58 @@
+<script setup>
+import * as lucide from 'lucide-vue-next'
+
+// Props
+const props = defineProps({
+    // เปิด/ปิด Modal
+    isOpen: {
+        type: Boolean,
+        default: false
+    },
+    // หัวข้อ Modal
+    title: {
+        type: String,
+        default: ''
+    },
+    // ขนาด Modal: 'sm', 'md', 'lg', 'xl'
+    size: {
+        type: String,
+        default: 'md'
+    }
+})
+
+// Emits
+const emit = defineEmits(['close'])
+
+// ปิด Modal
+const closeModal = () => {
+    emit('close')
+}
+
+// กำหนดขนาด Modal
+const sizeClasses = {
+    sm: 'max-w-sm',
+    md: 'max-w-md',
+    lg: 'max-w-lg',
+    xl: 'max-w-xl'
+}
+</script>
+
+<template>
+    <Teleport to="body">
+        <div v-if="isOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            @click.self="closeModal">
+            <div class="bg-white rounded-2xl shadow-xl w-full p-6" :class="sizeClasses[size]">
+                <!-- Header -->
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold text-zinc-800">{{ title }}</h3>
+                    <button @click="closeModal" class="text-zinc-400 hover:text-zinc-600 transition-colors">
+                        <component :is="lucide.X" class="w-5 h-5" />
+                    </button>
+                </div>
+
+                <!-- Content (ใช้ slot) -->
+                <slot></slot>
+            </div>
+        </div>
+    </Teleport>
+</template>
