@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: db
--- Generation Time: Jan 27, 2026 at 03:03 AM
+-- Generation Time: Jan 27, 2026 at 06:25 AM
 -- Server version: 8.4.7
 -- PHP Version: 8.3.29
 
@@ -64,6 +64,13 @@ CREATE TABLE `committee_summary` (
   `signature_path` text COLLATE utf8mb4_unicode_ci,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `committee_summary`
+--
+
+INSERT INTO `committee_summary` (`id`, `period_id`, `evaluatee_id`, `committee_user_id`, `summary`, `signature_path`, `created_at`) VALUES
+(1, 2, 1, 8, '{\"selfScore\":\"10.00\",\"committeeScore\":\"20.00\",\"averageScore\":\"15.00\",\"chairman_name\":\"นาย กรรมการ ยอดเยี่ยม\",\"confirmed_at\":\"2026-01-27T05:26:29.739Z\"}', 'นาย กรรมการ ยอดเยี่ยม', '2026-01-27 05:26:29');
 
 -- --------------------------------------------------------
 
@@ -132,10 +139,11 @@ CREATE TABLE `evaluation_committee` (
 --
 
 INSERT INTO `evaluation_committee` (`id`, `period_id`, `evaluatee_id`, `committee_user_id`, `role`) VALUES
-(4, 2, 1, 8, NULL),
-(5, 4, 1, 8, NULL),
-(6, 5, 2, 11, NULL),
-(7, 5, 3, 11, NULL);
+(4, 2, 1, 8, 'Chairman'),
+(5, 4, 1, 8, 'Chairman'),
+(6, 5, 2, 11, 'Member'),
+(7, 5, 3, 11, 'Member'),
+(8, 5, 1, 8, 'Chairman');
 
 -- --------------------------------------------------------
 
@@ -177,6 +185,13 @@ CREATE TABLE `evaluation_results` (
   `average_score` decimal(6,2) DEFAULT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `evaluation_results`
+--
+
+INSERT INTO `evaluation_results` (`id`, `period_id`, `evaluatee_id`, `total_score`, `average_score`, `created_at`) VALUES
+(1, 2, 1, 20.00, 2.00, '2026-01-27 05:26:29');
 
 -- --------------------------------------------------------
 
@@ -268,6 +283,18 @@ CREATE TABLE `evidences` (
   `uploaded_at` datetime DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `evidences`
+--
+
+INSERT INTO `evidences` (`id`, `evaluatee_id`, `indicator_id`, `file_path`, `description`, `url`, `uploaded_at`) VALUES
+(1, 1, 6, '/uploads/1769486212254-255359706.png', 'เป็นภาพหลักฐานยืนยันว่าผมมีความสุจริต', NULL, '2026-01-27 03:56:52'),
+(2, 1, 7, NULL, 'ภาพหลักฐานความรับผิดชอบ', 'https://storage.googleapis.com/techsauce-prod/ugc/uploads/2022/8/1200_630_1660019602_%E0%B8%84%E0%B8%B8%E0%B8%93%E0%B9%80%E0%B8%9B%E0%B9%87%E0%B8%99%E0%B8%84%E0%B8%99%E0%B8%A1%E0%B8%B5%E0%B8%84%E0%B8%A7%E0%B8%B2%E0%B8%A1%E0%B8%A3%E0%B8%B1%E0%B8%9A%E0%B8%9C%E0%B8%B4%E0%B8%94%E0%B8%8A%E0%B8%AD%E0%B8%9A%E0%B8%AA%E0%B8%B9%E0%B8%87%E0%B9%80%E0%B8%81%E0%B8%B4%E0%B8%99%E0%B9%84%E0%B8%9B%E0%B8%AB%E0%B8%A3%E0%B8%B7%E0%B8%AD%E0%B9%84%E0%B8%A1%E0%B9%88%3F_.jpg', '2026-01-27 03:56:52'),
+(3, 1, 8, '/uploads/1769486212279-659551663.png', 'ภาพหลักฐานความตรงต่อเวลา', NULL, '2026-01-27 03:56:52'),
+(4, 1, 6, '/uploads/1769486212254-255359706.png', 'เป็นภาพหลักฐานยืนยันว่าผมมีความสุจริต', NULL, '2026-01-27 04:19:59'),
+(5, 1, 7, NULL, 'ภาพหลักฐานความรับผิดชอบ', 'https://storage.googleapis.com/techsauce-prod/ugc/uploads/2022/8/1200_630_1660019602_%E0%B8%84%E0%B8%B8%E0%B8%93%E0%B9%80%E0%B8%9B%E0%B9%87%E0%B8%99%E0%B8%84%E0%B8%99%E0%B8%A1%E0%B8%B5%E0%B8%84%E0%B8%A7%E0%B8%B2%E0%B8%A1%E0%B8%A3%E0%B8%B1%E0%B8%9A%E0%B8%9C%E0%B8%B4%E0%B8%94%E0%B8%8A%E0%B8%AD%E0%B8%9A%E0%B8%AA%E0%B8%B9%E0%B8%87%E0%B9%80%E0%B8%81%E0%B8%B4%E0%B8%99%E0%B9%84%E0%B8%9B%E0%B8%AB%E0%B8%A3%E0%B8%B7%E0%B8%AD%E0%B9%84%E0%B8%A1%E0%B9%88%3F_.jpg', '2026-01-27 04:19:59'),
+(6, 1, 8, '/uploads/1769486212279-659551663.png', 'ภาพหลักฐานความตรงต่อเวลา', NULL, '2026-01-27 04:19:59');
+
 -- --------------------------------------------------------
 
 --
@@ -345,7 +372,10 @@ INSERT INTO `self_evaluations` (`id`, `period_id`, `evaluatee_id`, `indicator_id
 (1, 1, 1, 1, 3, 'ควย', '2026-01-25 11:15:44'),
 (2, 2, 1, 1, 1, 'เพราะว่าผมมาตรงต่อเวลาตลาดเลยครับ', '2026-01-26 07:01:24'),
 (3, 4, 1, 5, 4, 'มีความรับผิดชอบต่อหน้าที่เป็นอย่างดี', '2026-01-26 07:25:54'),
-(4, 5, 3, 6, 4, '', '2026-01-26 08:18:52');
+(4, 5, 3, 6, 4, '', '2026-01-26 08:18:52'),
+(5, 5, 1, 6, 4, 'ผมนั้นมีความซื้อสัตย์ สุจริต', '2026-01-27 03:56:52'),
+(6, 5, 1, 7, 4, 'ผมมีความมีวินัยที่สูง มีความรับผิดชอบต่อหน้าที่ ที่ดี', '2026-01-27 03:56:52'),
+(7, 5, 1, 8, 4, 'ผมมีความตรงต่อเวลามาก เป็นคนละเอียดอ่อนต่อความตรงต่อเวลา', '2026-01-27 03:56:52');
 
 -- --------------------------------------------------------
 
@@ -375,6 +405,7 @@ CREATE TABLE `users` (
   `password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `email` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
   `phone` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `profile_img` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `role` enum('Personnel','Evaluatees','Evaluator') COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -383,20 +414,20 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `prefix`, `first_name`, `last_name`, `password`, `email`, `phone`, `role`, `created_at`) VALUES
-(1, NULL, 'Alexander', 'Souller', '$2b$10$60R/RYrFNmrSUWepKrB82..74WGlwiDKFjoIkafUrEDJirqG.Pdl2', 'andruw@gmail.com', NULL, 'Evaluatees', '2026-01-05 06:23:36'),
-(2, 'นาย', 'อันดูว์', 'ซูเลม', '$2b$10$ezG6FIjm5bO3titPp/A43O93BV3QT01JmbKVdjgKX4ivxxAf7Yag.', 'nateeandu77@gmail.com', '0612627319', 'Evaluatees', '2026-01-14 03:30:42'),
-(3, 'Mr', 'Alexander', 'Souller', '$2b$10$Vn9K/09J5/IesG8/v5f0c.TudujM1DM/S9j3bpvXIZ.wQhNX0zj6O', 'alexander@gmail.com', '0612627319', 'Evaluatees', '2026-01-14 03:32:44'),
-(4, 'Mr', 'Lyka', 'Howdy', '$2b$10$crm4c/OfJZO4HqpAiMU3Xe9CkmDwvNP0PWENxENFROkqG6QstNPYS', 'lyka@gmail.com', '0612627319', 'Evaluatees', '2026-01-19 03:03:05'),
-(5, NULL, 'Admin', 'Personnel', '$2b$10$zrhvz2T21Xg9AaXGLs/CteGqDmjq256kp7heVCLx22.CpJ.ZdQwK2', 'admin@gmail.com', NULL, 'Personnel', '2026-01-19 05:08:10'),
-(6, 'Mr', 'Phuthiphong', 'Santhitiphong', '$2b$10$.n/tCTj/BwbvWG/OwR3SP.T7deLoi4i4qiZNUpuaq9jDyfrUkYNy2', 'vatvghjkl2@gmail.com', NULL, 'Personnel', '2026-01-19 05:26:51'),
-(7, 'Mr', 'Phuthiphong', 'Santhitiphong', '$2b$10$WNxrtuqsN8g8Yl4AmBxYf.cM0pSUQBiQOeCBbtdty1ei1R4fEhZCG', 'vatvghjkl3@gmail.com', '0629069091', 'Personnel', '2026-01-19 05:27:30'),
-(8, 'นาย', 'กรรมการ', 'ยอดเยี่ยม', '$2b$10$3jya.eF0scXZcjNtO5akrOY.Q3ClSm.7vuqFWrUtDvIJope8oKqym', 'committee@gmail.com', '0612627319', 'Evaluator', '2026-01-20 09:34:34'),
-(9, 'นาย', 'พุฒิพงศ์', 'สัณฐิติพงศ์', '$2b$10$gL6wJuXYSGlzCl6chWC6Fe.d/vcLlaflaRy5T3hG/.O5rAJ2A71NS', 'testuser01@gmail.com', '1234561234', 'Personnel', '2026-01-26 04:23:36'),
-(10, 'นาง', 'พุฒิพงศ์', 'สันฐิติพงศ์', '$2b$10$KnbKONzMi8Bg/RaX9PtSdeFrek..0Z/bRrcoZUXiB.ds3PKmeY8ty', 'phutipong@gmail.com', '0628271611', 'Evaluatees', '2026-01-26 07:46:43'),
-(11, 'นาย', 'โด้', 'นอนตื่นสาย', '$2b$10$FUxJ7phCB2vhlWnZzZoCROK4EOsY5t1O9B3FX.z9cq1NK.Ypm1lge', 'doo@gmail.com', '0612627319', 'Evaluator', '2026-01-26 08:04:10'),
-(12, 'นาง', 'test', 'test', '$2b$10$2HyxMsRYnXoyv/nXmeo3reVN9Zh7LEpYL9BeC6J3STPFUhheP9BSe', 'test@gmail.com', '123', 'Evaluatees', '2026-01-26 08:15:11'),
-(13, NULL, 'Andruw', 'Solem', '$2b$10$DjUzE6X4HoaqXyv/QrnQAeq7SEVny3OjxBqm/fbwKHTjLtolQ7tiS', 'andu@gmail.com', NULL, 'Evaluatees', '2026-01-26 08:15:56');
+INSERT INTO `users` (`id`, `prefix`, `first_name`, `last_name`, `password`, `email`, `phone`, `profile_img`, `role`, `created_at`) VALUES
+(1, NULL, 'Alexander', 'Souller', '$2b$10$60R/RYrFNmrSUWepKrB82..74WGlwiDKFjoIkafUrEDJirqG.Pdl2', 'andruw@gmail.com', NULL, '/uploads/1769494711978-405362649.jpg', 'Evaluatees', '2026-01-05 06:23:36'),
+(2, 'นาย', 'อันดูว์', 'ซูเลม', '$2b$10$ezG6FIjm5bO3titPp/A43O93BV3QT01JmbKVdjgKX4ivxxAf7Yag.', 'nateeandu77@gmail.com', '0612627319', NULL, 'Evaluatees', '2026-01-14 03:30:42'),
+(3, 'Mr', 'Alexander', 'Souller', '$2b$10$Vn9K/09J5/IesG8/v5f0c.TudujM1DM/S9j3bpvXIZ.wQhNX0zj6O', 'alexander@gmail.com', '0612627319', NULL, 'Evaluatees', '2026-01-14 03:32:44'),
+(4, 'Mr', 'Lyka', 'Howdy', '$2b$10$crm4c/OfJZO4HqpAiMU3Xe9CkmDwvNP0PWENxENFROkqG6QstNPYS', 'lyka@gmail.com', '0612627319', NULL, 'Evaluatees', '2026-01-19 03:03:05'),
+(5, NULL, 'Admin', 'Personnel', '$2b$10$zrhvz2T21Xg9AaXGLs/CteGqDmjq256kp7heVCLx22.CpJ.ZdQwK2', 'admin@gmail.com', NULL, '/uploads/1769494936161-168780221.jpg', 'Personnel', '2026-01-19 05:08:10'),
+(6, 'Mr', 'Phuthiphong', 'Santhitiphong', '$2b$10$.n/tCTj/BwbvWG/OwR3SP.T7deLoi4i4qiZNUpuaq9jDyfrUkYNy2', 'vatvghjkl2@gmail.com', NULL, NULL, 'Personnel', '2026-01-19 05:26:51'),
+(7, 'Mr', 'Phuthiphong', 'Santhitiphong', '$2b$10$WNxrtuqsN8g8Yl4AmBxYf.cM0pSUQBiQOeCBbtdty1ei1R4fEhZCG', 'vatvghjkl3@gmail.com', '0629069091', NULL, 'Personnel', '2026-01-19 05:27:30'),
+(8, NULL, 'กรรมการ', 'ยอดเยี่ยม', '$2b$10$3jya.eF0scXZcjNtO5akrOY.Q3ClSm.7vuqFWrUtDvIJope8oKqym', 'committee@gmail.com', NULL, NULL, 'Evaluator', '2026-01-20 09:34:34'),
+(9, 'นาย', 'พุฒิพงศ์', 'สัณฐิติพงศ์', '$2b$10$gL6wJuXYSGlzCl6chWC6Fe.d/vcLlaflaRy5T3hG/.O5rAJ2A71NS', 'testuser01@gmail.com', '1234561234', NULL, 'Personnel', '2026-01-26 04:23:36'),
+(10, 'นาง', 'พุฒิพงศ์', 'สันฐิติพงศ์', '$2b$10$KnbKONzMi8Bg/RaX9PtSdeFrek..0Z/bRrcoZUXiB.ds3PKmeY8ty', 'phutipong@gmail.com', '0628271611', NULL, 'Evaluatees', '2026-01-26 07:46:43'),
+(11, 'นาย', 'โด้', 'นอนตื่นสาย', '$2b$10$FUxJ7phCB2vhlWnZzZoCROK4EOsY5t1O9B3FX.z9cq1NK.Ypm1lge', 'doo@gmail.com', '0612627319', NULL, 'Evaluator', '2026-01-26 08:04:10'),
+(12, 'นาง', 'test', 'test', '$2b$10$2HyxMsRYnXoyv/nXmeo3reVN9Zh7LEpYL9BeC6J3STPFUhheP9BSe', 'test@gmail.com', '123', NULL, 'Evaluatees', '2026-01-26 08:15:11'),
+(13, NULL, 'Andruw', 'Solem', '$2b$10$DjUzE6X4HoaqXyv/QrnQAeq7SEVny3OjxBqm/fbwKHTjLtolQ7tiS', 'andu@gmail.com', NULL, NULL, 'Evaluatees', '2026-01-26 08:15:56');
 
 --
 -- Indexes for dumped tables
@@ -544,7 +575,7 @@ ALTER TABLE `committee_evaluations`
 -- AUTO_INCREMENT for table `committee_summary`
 --
 ALTER TABLE `committee_summary`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `departments`
@@ -562,7 +593,7 @@ ALTER TABLE `evaluatees`
 -- AUTO_INCREMENT for table `evaluation_committee`
 --
 ALTER TABLE `evaluation_committee`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `evaluation_periods`
@@ -574,7 +605,7 @@ ALTER TABLE `evaluation_periods`
 -- AUTO_INCREMENT for table `evaluation_results`
 --
 ALTER TABLE `evaluation_results`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `evaluation_scale`
@@ -598,7 +629,7 @@ ALTER TABLE `evaluation_topics`
 -- AUTO_INCREMENT for table `evidences`
 --
 ALTER TABLE `evidences`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `indicators`
@@ -616,7 +647,7 @@ ALTER TABLE `positions`
 -- AUTO_INCREMENT for table `self_evaluations`
 --
 ALTER TABLE `self_evaluations`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `system_logs`
