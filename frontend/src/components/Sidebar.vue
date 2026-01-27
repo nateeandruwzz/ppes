@@ -21,7 +21,7 @@ const isActive = (link) => {
 <template>
     <transition name="slide">
         <aside :class="isOpen ? 'w-64' : 'w-17 transition-all duration-300 ease-in-out'"
-            class="flex flex-col h-screen bg-gray-50/50 border-r border-gray-200/70 sticky top-0">
+            class="flex flex-col h-screen bg-gray-50/50 border-r border-gray-200/70 sticky top-0 z-50">
             <!-- Sidebar Header -->
             <div :class="isOpen ? 'p-4' : 'px-3.5 py-4'"
                 class="flex items-center justify-between border-b border-gray-200/70">
@@ -50,7 +50,7 @@ const isActive = (link) => {
             </nav>
 
             <!-- Sidebar Footer -->
-            <div class="mt-auto p-2.5">
+            <div class="mt-auto p-1.5">
                 <UserProfile :isOpen="isOpen" />
             </div>
         </aside>

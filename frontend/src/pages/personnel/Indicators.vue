@@ -159,8 +159,6 @@ const handleSubmit = async () => {
     }
 }
 
-// === ส่วนเกณฑ์คะแนน ===
-
 // เปิด Modal สำหรับเพิ่ม/แก้ไขเกณฑ์คะแนน
 const openScaleModal = (mode, scale = null) => {
     scaleMode.value = mode

@@ -27,8 +27,15 @@ const form = reactive({
     id: null,
     period_id: '',
     evaluatee_id: '',
-    committee_user_id: ''
+    committee_user_id: '',
+    role: ''
 })
+
+// Role options
+const roleOptions = [
+    { value: 'Chairman', label: 'ประธานกรรมการ' },
+    { value: 'Member', label: 'กรรมการ' }
+]
 
 // กรองตามรอบการประเมิน
 const filteredAssignments = computed(() => {
@@ -113,11 +120,13 @@ const openModal = (mode, item = null) => {
         form.period_id = item.period_id
         form.evaluatee_id = item.evaluatee_id
         form.committee_user_id = item.committee_user_id
+        form.role = item.role || ''
     } else {
         form.id = null
         form.period_id = selectedPeriodFilter.value || ''
         form.evaluatee_id = ''
         form.committee_user_id = ''
+        form.role = ''
     }
 }
 
@@ -132,7 +141,8 @@ const handleSubmit = async () => {
         const payload = {
             period_id: form.period_id,
             evaluatee_id: form.evaluatee_id,
-            committee_user_id: form.committee_user_id
+            committee_user_id: form.committee_user_id,
+            role: form.role || null
         }
 
         if (modalMode.value === 'create') {
@@ -237,6 +247,8 @@ onMounted(() => {
                                 ผู้ถูกประเมิน</th>
                             <th class="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
                                 กรรมการผู้ประเมิน</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                                บทบาท</th>
                             <th
                                 class="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider text-right">
                                 จัดการ</th>
@@ -244,10 +256,10 @@ onMounted(() => {
                     </thead>
                     <tbody class="divide-y divide-zinc-100">
                         <tr v-if="isLoading">
-                            <td colspan="5" class="px-6 py-8 text-center text-zinc-400">กำลังโหลดข้อมูล...</td>
+                            <td colspan="6" class="px-6 py-8 text-center text-zinc-400">กำลังโหลดข้อมูล...</td>
                         </tr>
                         <tr v-else-if="filteredAssignments.length === 0">
-                            <td colspan="5" class="px-6 py-8 text-center text-zinc-400">ไม่พบข้อมูล</td>
+                            <td colspan="6" class="px-6 py-8 text-center text-zinc-400">ไม่พบข้อมูล</td>
                         </tr>
                         <tr v-else v-for="(item, index) in filteredAssignments" :key="item.id"
                             class="hover:bg-zinc-50/50 transition-colors">
@@ -269,6 +281,17 @@ onMounted(() => {
                                     <span class="font-medium text-zinc-800">{{ getEvaluatorName(item.committee_user_id)
                                         }}</span>
                                 </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span v-if="item.role === 'Chairman'"
+                                    class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700">
+                                    ประธาน
+                                </span>
+                                <span v-else-if="item.role === 'Member'"
+                                    class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-zinc-100 text-zinc-600">
+                                    กรรมการ
+                                </span>
+                                <span v-else class="text-zinc-400 text-sm">-</span>
                             </td>
                             <td class="px-6 py-4 text-right space-x-2">
                                 <button @click="openModal('edit', item)"
@@ -324,6 +347,18 @@ onMounted(() => {
                         <option value="" disabled>เลือกกรรมการ</option>
                         <option v-for="user in evaluators" :key="user.id" :value="user.id">
                             {{ user.first_name }} {{ user.last_name }}
+                        </option>
+                    </select>
+                </div>
+
+                <!-- บทบาทกรรมการ -->
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 mb-1">บทบาท</label>
+                    <select v-model="form.role"
+                        class="w-full px-4 py-2 rounded-xl border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all">
+                        <option value="">เลือกบทบาท (ไม่บังคับ)</option>
+                        <option v-for="role in roleOptions" :key="role.value" :value="role.value">
+                            {{ role.label }}
                         </option>
                     </select>
                 </div>

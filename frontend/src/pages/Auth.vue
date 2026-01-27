@@ -37,8 +37,6 @@ const resetForm = () => {
     registerForm.password = ''
     registerForm.confirm_password = ''
     registerForm.phone = ''
-    // registerForm.position_id = '' // Removed from template
-    // registerForm.department_id = '' // Removed from template
 }
 
 // Form login
@@ -84,8 +82,6 @@ onMounted(async () => {
     await fetchMasterData();
 })
 
-// Handle login
-
 
 // Handle register
 const submitRegister = async () => {
@@ -124,6 +120,7 @@ const submitRegister = async () => {
     }
 }
 
+// Handle login
 const submitLogin = async () => {
     clearError()
 

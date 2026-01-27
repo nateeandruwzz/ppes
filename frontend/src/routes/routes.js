@@ -66,6 +66,16 @@ export const routes = [
                 name: 'personnel.evaluatee',
                 component: () => import('../pages/personnel/Evaluatee.vue')
             },
+            {
+                path: 'tracking',
+                name: 'personnel.tracking',
+                component: () => import('../pages/personnel/Tracking.vue')
+            },
+            {
+                path: 'report',
+                name: 'personnel.report',
+                component: () => import('../pages/personnel/Report.vue')
+            },
         ]
     },
 
@@ -95,6 +105,11 @@ export const routes = [
                 path: 'evaluate/:periodId/:evaluateeId',
                 name: 'committee.evaluateForm',
                 component: () => import('../pages/committee/EvaluateForm.vue')
+            },
+            {
+                path: 'summary/:periodId/:evaluateeId',
+                name: 'committee.summary',
+                component: () => import('../pages/committee/Summary.vue')
             },
         ]
     },

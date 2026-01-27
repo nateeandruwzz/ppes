@@ -11,6 +11,8 @@ const menuItem = [
     { title: 'คณะกรรมการ', icon: 'Users', link: '/personnel/committee' },
     { title: 'ผู้รับการประเมิน', icon: 'User', link: '/personnel/evaluatee' },
     { title: 'มอบหมายการประเมิน', icon: 'UserCheck', link: '/personnel/assignment' },
+    { title: 'ติดตามสถานะ', icon: 'BarChart3', link: '/personnel/tracking' },
+    { title: 'รายงานสรุป', icon: 'FileBarChart', link: '/personnel/report' },
 ]
 </script>
 

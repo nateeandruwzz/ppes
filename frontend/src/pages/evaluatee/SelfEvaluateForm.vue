@@ -1,8 +1,6 @@
 <template>
     <div class="py-5 px-5 md:px-15">
-        <div v-if="isLoading" class="flex items-center justify-center py-20">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500"></div>
-        </div>
+        <Loading v-if="isLoading" />
 
         <div v-else-if="isError"
             class="p-8 bg-red-50 text-red-600 rounded-2xl border border-red-200 text-center shadow-sm">
@@ -32,6 +30,33 @@
                         class="self-start md:self-auto px-3 py-1 rounded-full bg-sky-50 text-sky-700 text-sm font-medium">
                         {{ periodName }}
                     </span>
+                </div>
+
+                <!-- ข้อมูลผู้ประเมิน-->
+                <div class="flex items-center justify-between gap-6 px-4 py-4 border-b border-zinc-100 mb-4">
+                    <!-- ข้อมูลส่วนตัว -->
+                    <div class="flex items-center gap-8">
+                        <div>
+                            <span class="text-xs text-zinc-500 block mb-1">ผู้ประเมิน</span>
+                            <div class="font-bold text-base text-zinc-900">{{ currentUser?.first_name }} {{
+                                currentUser?.last_name }}</div>
+                        </div>
+                        <div class="h-8 w-px bg-zinc-200"></div>
+                        <div>
+                            <span class="text-xs text-zinc-500 block mb-1">ตำแหน่ง</span>
+                            <div class="font-medium text-sm text-zinc-700">{{ userPosition }}</div>
+                        </div>
+                        <div class="h-8 w-px bg-zinc-200"></div>
+                        <div>
+                            <span class="text-xs text-zinc-500 block mb-1">หน่วยงาน</span>
+                            <div class="font-medium text-sm text-zinc-700">{{ userDepartment }}</div>
+                        </div>
+                    </div>
+                    <!-- รูปโปรไฟล์ (ขวา) - สี่เหลี่ยม -->
+                    <div
+                        class="w-24 h-24 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600 border-4 border-amber-50 shrink-0">
+                        <component :is="lucide.User" class="w-12 h-12" />
+                    </div>
                 </div>
 
                 <!-- สถานะ -->
@@ -113,6 +138,91 @@
                                         class="w-full min-h-[100px] p-4 rounded-xl border border-zinc-200 bg-zinc-50 focus:bg-white focus:border-sky-500 focus:ring-4 focus:ring-sky-500/10 transition-all text-sm resize-none outline-none"></textarea>
                                 </div>
                             </div>
+
+                            <!-- Evidence Attachment -->
+                            <div v-if="indicator.required_evidence" class="space-y-4 pt-4 border-t border-zinc-100">
+                                <h4 class="font-semibold text-sm text-zinc-900 flex items-center gap-2">
+                                    <component :is="lucide.Paperclip" class="w-4 h-4 text-zinc-500" />
+                                    แนบหลักฐาน <span class="text-red-500">*</span>
+                                </h4>
+
+                                <!-- Evidence Type Toggle -->
+                                <div class="flex gap-2 mb-3">
+                                    <button type="button" @click="setEvidenceType(indicator.id, 'file')" :class="getEvidenceType(indicator.id) === 'file'
+                                        ? 'bg-sky-500 text-white'
+                                        : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'"
+                                        class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5">
+                                        <component :is="lucide.FileUp" class="w-3.5 h-3.5" />
+                                        อัปโหลดไฟล์
+                                    </button>
+                                    <button type="button" @click="setEvidenceType(indicator.id, 'url')" :class="getEvidenceType(indicator.id) === 'url'
+                                        ? 'bg-sky-500 text-white'
+                                        : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'"
+                                        class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5">
+                                        <component :is="lucide.Link" class="w-3.5 h-3.5" />
+                                        ใส่ลิงก์ URL
+                                    </button>
+                                </div>
+
+                                <!-- File Upload Mode -->
+                                <div v-if="getEvidenceType(indicator.id) === 'file'" class="space-y-2">
+                                    <div v-if="!getEvidenceFile(indicator.id)">
+                                        <label :for="`file-${indicator.id}`"
+                                            class="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-zinc-300 rounded-xl cursor-pointer bg-zinc-50 hover:bg-zinc-100 transition-colors">
+                                            <component :is="lucide.Upload" class="w-6 h-6 text-zinc-400 mb-2" />
+                                            <span class="text-sm text-zinc-500">คลิกเพื่อเลือกไฟล์</span>
+                                            <span class="text-xs text-zinc-400 mt-1">(รูปภาพ, PDF, Word, Excel สูงสุด
+                                                10MB)</span>
+                                        </label>
+                                        <input :id="`file-${indicator.id}`" type="file"
+                                            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                                            @change="e => handleFileSelect(indicator.id, e)" class="hidden" />
+                                    </div>
+
+                                    <!-- Show uploaded file or existing evidence -->
+                                    <div v-else class="p-3 bg-green-50 border border-green-200 rounded-xl">
+                                        <!-- แสดงตัวอย่างรูปภาพ (ถ้าเป็นรูป) -->
+                                        <div v-if="isImageFile(getEvidenceFile(indicator.id))" class="mb-2">
+                                            <img :src="getImagePreviewUrl(indicator.id)"
+                                                class="max-h-32 rounded-lg object-contain" alt="หลักฐาน" />
+                                        </div>
+                                        <div class="flex items-center gap-3">
+                                            <component :is="lucide.FileCheck" class="w-5 h-5 text-green-600 shrink-0" />
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-sm font-medium text-green-800 truncate">
+                                                    {{ getEvidenceFileName(indicator.id) }}
+                                                </p>
+                                                <a v-if="getEvidenceFilePath(indicator.id)"
+                                                    :href="getFullFileUrl(indicator.id)" target="_blank"
+                                                    class="text-xs text-sky-600 hover:underline">
+                                                    คลิกเพื่อดูไฟล์
+                                                </a>
+                                                <span v-else class="text-xs text-green-600">อัปโหลดแล้ว</span>
+                                            </div>
+                                            <button type="button" @click="clearEvidence(indicator.id)"
+                                                class="p-1.5 hover:bg-green-100 rounded-lg transition-colors">
+                                                <component :is="lucide.X" class="w-4 h-4 text-green-600" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- URL Input Mode -->
+                                <div v-else class="space-y-2">
+                                    <input type="url" :value="getEvidenceUrl(indicator.id)"
+                                        @input="e => setEvidenceUrl(indicator.id, e.target.value)"
+                                        placeholder="https://example.com/evidence.pdf"
+                                        class="w-full p-3 rounded-xl border border-zinc-200 bg-zinc-50 focus:bg-white focus:border-sky-500 focus:ring-4 focus:ring-sky-500/10 transition-all text-sm outline-none" />
+                                    <p class="text-xs text-zinc-400">ใส่ลิงก์ไปยังไฟล์หลักฐาน (Google Drive, Dropbox,
+                                        เว็บไซต์ ฯลฯ)</p>
+                                </div>
+
+                                <!-- Evidence Description -->
+                                <input type="text" :value="getEvidenceDescription(indicator.id)"
+                                    @input="e => setEvidenceDescription(indicator.id, e.target.value)"
+                                    placeholder="คำอธิบายหลักฐาน (ถ้ามี)"
+                                    class="w-full p-3 rounded-xl border border-zinc-200 bg-zinc-50 focus:bg-white focus:border-sky-500 focus:ring-4 focus:ring-sky-500/10 transition-all text-sm outline-none" />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -158,7 +268,8 @@
                                 <tr>
                                     <td colspan="2" class="py-4 px-6 font-bold text-zinc-900 text-right">รวมคะแนนทั้งหมด
                                     </td>
-                                    <td class="py-4 px-6 text-center font-bold text-zinc-700">{{ totalWeight.toFixed(2) }}</td>
+                                    <td class="py-4 px-6 text-center font-bold text-zinc-700">{{ totalWeight.toFixed(2)
+                                        }}</td>
                                     <td class="py-4 px-6"></td>
                                     <td class="py-4 px-6 text-center">
                                         <span class="text-xl font-bold text-sky-600">{{ totalScore }}</span>
@@ -174,8 +285,7 @@
     </div>
 
     <!-- Sticky Footer Action Bar -->
-    <div
-        class="sticky bottom-0 left-0 right-0 z-40 p-4 bg-white/90 backdrop-blur-md border-t border-zinc-200 mt-8">
+    <div class="sticky bottom-0 left-0 right-0 z-40 p-4 bg-white/90 backdrop-blur-md border-t border-zinc-200 mt-8">
         <div class="flex items-center justify-between max-w-7xl mx-auto">
             <div class="hidden md:block text-sm text-zinc-500">
                 <span v-if="hasUnsavedChanges" class="text-amber-500 flex items-center gap-2">
@@ -209,6 +319,8 @@ import { api } from '../../services/axios'
 import * as lucide from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { useAuthStore } from '../../store/authStore'
+import Loading from '../../components/Loading.vue'
+import { BASE_URL } from '../../config'
 
 const route = useRoute()
 const router = useRouter()
@@ -231,8 +343,115 @@ const hasUnsavedChanges = ref(false)
 
 // Form Data
 const formData = reactive({
-    scores: {}
+    scores: {},
+    evidences: {}
 })
+
+// Evidence Getters/Setters
+const getEvidenceType = (indicatorId) => {
+    return formData.evidences[indicatorId]?.type ?? 'file'
+}
+
+const setEvidenceType = (indicatorId, type) => {
+    if (!formData.evidences[indicatorId]) {
+        formData.evidences[indicatorId] = { type: 'file', file: null, filePath: '', url: '', description: '' }
+    }
+    formData.evidences[indicatorId].type = type
+    hasUnsavedChanges.value = true
+}
+
+const getEvidenceFile = (indicatorId) => {
+    const evidence = formData.evidences[indicatorId]
+    return evidence?.file || evidence?.filePath || null
+}
+
+const getEvidenceUrl = (indicatorId) => {
+    return formData.evidences[indicatorId]?.url ?? ''
+}
+
+const setEvidenceUrl = (indicatorId, url) => {
+    if (!formData.evidences[indicatorId]) {
+        formData.evidences[indicatorId] = { type: 'url', file: null, filePath: '', url: '', description: '' }
+    }
+    formData.evidences[indicatorId].url = url
+    hasUnsavedChanges.value = true
+}
+
+const getEvidenceDescription = (indicatorId) => {
+    return formData.evidences[indicatorId]?.description ?? ''
+}
+
+const setEvidenceDescription = (indicatorId, desc) => {
+    if (!formData.evidences[indicatorId]) {
+        formData.evidences[indicatorId] = { type: 'file', file: null, filePath: '', url: '', description: '' }
+    }
+    formData.evidences[indicatorId].description = desc
+    hasUnsavedChanges.value = true
+}
+
+const handleFileSelect = (indicatorId, event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    if (!formData.evidences[indicatorId]) {
+        formData.evidences[indicatorId] = { type: 'file', file: null, filePath: '', url: '', description: '' }
+    }
+    formData.evidences[indicatorId].file = file
+    formData.evidences[indicatorId].filePath = '' // Clear old path when new file selected
+    hasUnsavedChanges.value = true
+}
+
+const clearEvidence = (indicatorId) => {
+    if (formData.evidences[indicatorId]) {
+        formData.evidences[indicatorId].file = null
+        formData.evidences[indicatorId].filePath = ''
+        formData.evidences[indicatorId].url = ''
+    }
+    hasUnsavedChanges.value = true
+}
+
+// ตรวจสอบว่าเป็นไฟล์รูปภาพหรือไม่
+const isImageFile = (fileOrPath) => {
+    if (!fileOrPath) return false
+    const name = typeof fileOrPath === 'string' ? fileOrPath : fileOrPath.name
+    if (!name) return false
+    const ext = name.split('.').pop()?.toLowerCase()
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(ext)
+}
+
+// ดึง URL สำหรับแสดง preview รูปภาพ
+const getImagePreviewUrl = (indicatorId) => {
+    const evidence = formData.evidences[indicatorId]
+    if (!evidence) return ''
+    if (evidence.file) {
+        return URL.createObjectURL(evidence.file)
+    }
+    if (evidence.filePath) {
+        return `${BASE_URL}${evidence.filePath}`
+    }
+    return ''
+}
+
+// ดึงชื่อไฟล์สำหรับแสดง
+const getEvidenceFileName = (indicatorId) => {
+    const evidence = formData.evidences[indicatorId]
+    if (!evidence) return ''
+    if (evidence.file) return evidence.file.name
+    if (evidence.filePath) return evidence.filePath.split('/').pop()
+    return 'ไฟล์ที่อัปโหลด'
+}
+
+// ดึง file path ที่บันทึกแล้ว
+const getEvidenceFilePath = (indicatorId) => {
+    return formData.evidences[indicatorId]?.filePath || ''
+}
+
+// ดึง URL สำหรับเปิดไฟล์
+const getFullFileUrl = (indicatorId) => {
+    const filePath = getEvidenceFilePath(indicatorId)
+    if (!filePath) return ''
+    return `${BASE_URL}${filePath}`
+}
 
 // Computed
 const periodIndicators = computed(() => {
@@ -331,6 +550,22 @@ const initFormData = () => {
             comment: existing ? existing.comment : '',
             existing_id: existing ? existing.id : null
         }
+
+        // โหลดหลักฐานที่มีอยู่
+        const existingEvidence = existingEvidences.value.find(ev =>
+            ev.indicator_id == ind.id
+        )
+
+        if (existingEvidence) {
+            formData.evidences[ind.id] = {
+                type: existingEvidence.url ? 'url' : 'file',
+                file: null,
+                filePath: existingEvidence.file_path || '',
+                url: existingEvidence.url || '',
+                description: existingEvidence.description || '',
+                existing_id: existingEvidence.id
+            }
+        }
     })
 
     hasUnsavedChanges.value = false
@@ -345,9 +580,13 @@ const fetchMyEvaluateeInfo = async () => {
 }
 
 const fetchIndicators = async () => {
-    const response = await api.get('/indicator')
+    // ใช้ API ที่ filter ตาม period โดยตรงจาก Backend
+    const url = periodId.value ? `/indicator/period/${periodId.value}` : '/indicator'
+    const response = await api.get(url)
     if (response.data.status === 1) {
         indicators.value = response.data.data
+    } else {
+        indicators.value = []
     }
 }
 
@@ -374,6 +613,25 @@ const fetchSelfEvaluations = async () => {
     }
 }
 
+// State for existing evidences
+const existingEvidences = ref([])
+
+// ดึงหลักฐานที่เคยอัปโหลดไว้
+const fetchEvidences = async () => {
+    if (!myEvaluateeInfo.value) return
+    try {
+        const response = await api.get(`/evidence/evaluatee/${myEvaluateeInfo.value.id}`)
+        if (response.data.status === 1) {
+            existingEvidences.value = response.data.data
+        } else {
+            existingEvidences.value = []
+        }
+    } catch (err) {
+        console.error('Error fetching evidences:', err)
+        existingEvidences.value = []
+    }
+}
+
 // Submit
 const handleSubmit = async () => {
     if (!myEvaluateeInfo.value) {
@@ -381,15 +639,30 @@ const handleSubmit = async () => {
         return
     }
 
-    // Validation
+    // Validation - Scores
     const missingScores = periodIndicators.value.filter(ind => getScore(ind.id) === null)
     if (missingScores.length > 0) {
         toast.error(`กรุณาให้คะแนนให้ครบทุกข้อ (ขาด ${missingScores.length} ข้อ)`)
         return
     }
 
+    // Validation - Evidence for required indicators
+    const missingEvidence = periodIndicators.value.filter(ind => {
+        if (!ind.required_evidence) return false
+        const evidence = formData.evidences[ind.id]
+        if (!evidence) return true
+        if (evidence.type === 'file' && !evidence.file && !evidence.filePath) return true
+        if (evidence.type === 'url' && !evidence.url) return true
+        return false
+    })
+    if (missingEvidence.length > 0) {
+        toast.error(`กรุณาแนบหลักฐานให้ครบ (ขาด ${missingEvidence.length} ข้อ)`)
+        return
+    }
+
     isSaving.value = true
     try {
+        // 1. Save Self Evaluations
         for (const indicator of periodIndicators.value) {
             const data = formData.scores[indicator.id]
             const payload = {
@@ -405,6 +678,47 @@ const handleSubmit = async () => {
             } else {
                 await api.post('/selfEvaluation', payload)
             }
+        }
+
+        // 2. Upload Files & Save Evidence for required indicators
+        for (const indicator of periodIndicators.value) {
+            if (!indicator.required_evidence) continue
+            const evidence = formData.evidences[indicator.id]
+            if (!evidence) continue
+
+            let file_path = evidence.filePath || ''
+            let url = evidence.url || ''
+
+            // If there's a new file to upload
+            if (evidence.type === 'file' && evidence.file) {
+                const uploadFormData = new FormData()
+                uploadFormData.append('file', evidence.file)
+
+                try {
+                    const uploadRes = await api.post('/upload', uploadFormData, {
+                        headers: { 'Content-Type': 'multipart/form-data' }
+                    })
+                    if (uploadRes.data.status === 1) {
+                        file_path = uploadRes.data.data.path
+                    }
+                } catch (uploadErr) {
+                    console.error('Upload error:', uploadErr)
+                    toast.error(`อัปโหลดไฟล์หลักฐานสำหรับ "${indicator.name}" ล้มเหลว`)
+                    continue
+                }
+            }
+
+            // Save Evidence record
+            const evidencePayload = {
+                evaluatee_id: myEvaluateeInfo.value.id,
+                indicator_id: indicator.id,
+                file_path: evidence.type === 'file' ? file_path : null,
+                url: evidence.type === 'url' ? url : null,
+                description: evidence.description || ''
+            }
+
+            // Check if evidence exists (could add update logic here)
+            await api.post('/evidence', evidencePayload)
         }
 
         toast.success('บันทึกการประเมินตนเองเรียบร้อยแล้ว')
@@ -430,6 +744,8 @@ const loadData = async () => {
             fetchPeriod(),
             fetchSelfEvaluations()
         ])
+        // ต้อง fetch หลักฐานหลังจากได้ myEvaluateeInfo แล้ว
+        await fetchEvidences()
         initFormData()
     } catch (error) {
         console.error('Error loading data:', error)

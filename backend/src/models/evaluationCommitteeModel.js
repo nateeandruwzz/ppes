@@ -14,25 +14,25 @@ export default class EvaluationCommittee {
     return rows;
   }
 
-  static async create(period_id,evaluatee_id,committee_user_id) {
+  static async create(period_id, evaluatee_id, committee_user_id, role = null) {
     const [result] = await pool.query(
-      "INSERT INTO evaluation_committee (period_id,evaluatee_id,committee_user_id) VALUES (?,?,?)",
-      [ period_id,evaluatee_id,committee_user_id ]
+      "INSERT INTO evaluation_committee (period_id, evaluatee_id, committee_user_id, role) VALUES (?, ?, ?, ?)",
+      [period_id, evaluatee_id, committee_user_id, role]
     );
     return result;
   }
-  
-  static async update(id,period_id,evaluatee_id,committee_user_id) {
+
+  static async update(id, period_id, evaluatee_id, committee_user_id, role = null) {
     const [result] = await pool.query(
-      "update evaluation_committee set period_id=?,evaluatee_id=?,committee_user_id=? where id = ?",
-      [period_id,evaluatee_id,committee_user_id,id]
+      "UPDATE evaluation_committee SET period_id = ?, evaluatee_id = ?, committee_user_id = ?, role = ? WHERE id = ?",
+      [period_id, evaluatee_id, committee_user_id, role, id]
     );
     return result;
   }
-  
+
   static async delete(id) {
     const [result] = await pool.query(
-      "delete from evaluation_committee where id = ?",[id]
+      "delete from evaluation_committee where id = ?", [id]
     );
     return result;
   }

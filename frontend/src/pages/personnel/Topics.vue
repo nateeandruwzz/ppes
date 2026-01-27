@@ -13,7 +13,7 @@ const topics = ref([])
 const isLoading = ref(false)
 const isModalOpen = ref(false)
 const isDeleteModalOpen = ref(false)
-const modalMode = ref('create') // 'create' or 'edit'
+const modalMode = ref('create')
 const deleteId = ref(null)
 
 // Form Data
@@ -28,7 +28,6 @@ const fetchTopics = async () => {
     isLoading.value = true
     try {
         const response = await api.get('/topic')
-        // API response มีโครงสร้างเป็น { status, message, data }
         if (response.data.status === 1) {
             topics.value = response.data.data
         } else {
@@ -52,7 +51,6 @@ const openModal = (mode, topic = null) => {
         form.name = topic.name
         form.description = topic.description
     } else {
-        // รีเซ็ตฟอร์มสำหรับการเพิ่มใหม่
         form.id = null
         form.name = ''
         form.description = ''

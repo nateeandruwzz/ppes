@@ -13,7 +13,7 @@ export default class User {
     const [rows] = await pool.query("SELECT * FROM users ");
     return rows;
   }
-  static async getByRole(role="Evaluatee") {
+  static async getByRole(role = "Evaluatee") {
     const [rows] = await pool.query(
       "SELECT * FROM users WHERE role = ?",
       [role]
@@ -28,15 +28,15 @@ export default class User {
     return rows;
   }
 
-  static async create(prefix, first_name, last_name, hash, email, phone, role="Evaluatee") {
+  static async create(prefix, first_name, last_name, hash, email, phone, role = "Evaluatee") {
     const [result] = await pool.query(
       "INSERT INTO users(prefix, first_name, last_name, password, email, phone, role) VALUES(?,?,?,?,?,?,?)",
       [prefix, first_name, last_name, hash, email, phone, role]
     );
     return result;
   }
-  
-  static async update(id,prefix, first_name, last_name, email, phone) {
+
+  static async update(id, prefix, first_name, last_name, email, phone) {
     const [result] = await pool.query(
       "update users set prefix=?, first_name=?, last_name=?, email=?, phone=? where id = ?",
       [prefix, first_name, last_name, email, phone, id]
@@ -44,7 +44,7 @@ export default class User {
     return result;
   }
 
-  static async updatePassword(id,hash) {
+  static async updatePassword(id, hash) {
     const [result] = await pool.query(
       "update users set password=? where id = ?",
       [hash, id]
@@ -52,7 +52,7 @@ export default class User {
     return result;
   }
 
-  static async updateRole(id,role) {
+  static async updateRole(id, role) {
     const [result] = await pool.query(
       "update users set role=? where id = ?",
       [role, id]
@@ -60,9 +60,17 @@ export default class User {
     return result;
   }
 
+  static async updateProfilePicture(id, path) {
+    const [result] = await pool.query(
+      "update users set profile_img=? where id = ?",
+      [path, id]
+    );
+    return result;
+  }
+
   static async delete(id) {
     const [result] = await pool.query(
-      "delete from users where id = ?",[id]
+      "delete from users where id = ?", [id]
     );
     return result;
   }

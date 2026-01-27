@@ -16,25 +16,32 @@ import evaluationResult from "./routes/evaluationResultRoute.js";
 import evaluationCommittee from "./routes/evaluationCommitteeRoute.js";
 import committeeSummary from "./routes/committeeSummaryRoute.js";
 import committeeEvaluation from "./routes/committeeEvaluationRoute.js";
+import uploadRoute from "./routes/uploadRoute.js";
+import path from "path";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use("/api/user",userRoute);
+
+// Serve static files from uploads folder
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+
+app.use("/api/user", userRoute);
 app.use("/api/position", positionRoute);
 app.use("/api/period", evaluationPeriodRoute);
 app.use("/api/department", departmentRoute);
-app.use("/api/indicator",indicatorRoute);
-app.use("/api/selfEvaluation",selfEvaluation);
-app.use("/api/evaluatee",evaluatee);
-app.use("/api/topic",evaluationTopic);
-app.use("/api/evidence",evidence);
-app.use("/api/evaluationStatus",evaluationStatus);
-app.use("/api/scale",evaluationScale);
-app.use("/api/result",evaluationResult);
-app.use("/api/summary",committeeSummary);
-app.use("/api/committee",evaluationCommittee);
-app.use("/api/evaluation",committeeEvaluation);
+app.use("/api/indicator", indicatorRoute);
+app.use("/api/selfEvaluation", selfEvaluation);
+app.use("/api/evaluatee", evaluatee);
+app.use("/api/topic", evaluationTopic);
+app.use("/api/evidence", evidence);
+app.use("/api/evaluationStatus", evaluationStatus);
+app.use("/api/scale", evaluationScale);
+app.use("/api/evaluationResult", evaluationResult);
+app.use("/api/committeeSummary", committeeSummary);
+app.use("/api/committee", evaluationCommittee);
+app.use("/api/evaluation", committeeEvaluation);
+app.use("/api/upload", uploadRoute);
 
 // --- 404 Handler ---
 app.use((req, res) => {

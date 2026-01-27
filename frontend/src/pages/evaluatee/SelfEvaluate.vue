@@ -50,7 +50,7 @@
         <!-- Content - Period Cards -->
         <div v-else class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <div v-for="period in periods" :key="period.id"
-                class="group bg-white rounded-xl border border-zinc-200 p-5 hover:border-sky-200 hover:shadow-md transition-all duration-200 flex flex-col">
+                class="group bg-white rounded-xl border border-zinc-200 p-5 hover:shadow-md transition-all duration-200 flex flex-col">
                 <div class="flex justify-between items-start mb-4">
                     <div class="flex items-center gap-3">
                         <div

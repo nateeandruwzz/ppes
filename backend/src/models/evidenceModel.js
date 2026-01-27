@@ -14,25 +14,41 @@ export default class Evidence {
     return rows;
   }
 
-  static async create(evaluatee_id , indicator_id, file_path, description, url) {
+  static async getByEvaluateeAndIndicator(evaluatee_id, indicator_id) {
+    const [rows] = await pool.query(
+      "SELECT * FROM evidences WHERE evaluatee_id = ? AND indicator_id = ?",
+      [evaluatee_id, indicator_id]
+    );
+    return rows.length > 0 ? rows[0] : null;
+  }
+
+  static async getByEvaluatee(evaluatee_id) {
+    const [rows] = await pool.query(
+      "SELECT * FROM evidences WHERE evaluatee_id = ?",
+      [evaluatee_id]
+    );
+    return rows;
+  }
+
+  static async create(evaluatee_id, indicator_id, file_path, description, url) {
     const [result] = await pool.query(
       "INSERT INTO evidences(evaluatee_id , indicator_id, file_path, description, url) VALUES(?,?,?,?,?)",
-      [ evaluatee_id , indicator_id, file_path, description, url ]
+      [evaluatee_id, indicator_id, file_path, description, url]
     );
     return result;
   }
-  
-  static async update(id,evaluatee_id , indicator_id, file_path, description, url) {
+
+  static async update(id, evaluatee_id, indicator_id, file_path, description, url) {
     const [result] = await pool.query(
       "update evidences set evaluatee_id=?, indicator_id=?, file_path=?, description=?, url=? where id = ?",
-      [evaluatee_id , indicator_id, file_path, description, url, id]
+      [evaluatee_id, indicator_id, file_path, description, url, id]
     );
     return result;
   }
 
   static async delete(id) {
     const [result] = await pool.query(
-      "delete from evidences where id = ?",[id]
+      "delete from evidences where id = ?", [id]
     );
     return result;
   }

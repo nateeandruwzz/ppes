@@ -101,7 +101,6 @@ const loadData = async () => {
         ])
 
         if (evaluateeRes.data.status === 1) {
-            // ใช้ == เพื่อเปรียบเทียบ string/number 
             myEvaluateeInfo.value = evaluateeRes.data.data.find(e => e.user_id == currentUser.value?.id)
 
             if (!myEvaluateeInfo.value) {

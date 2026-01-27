@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { api } from '../../services/axios'
 import * as lucide from 'lucide-vue-next'
 import { useAuthStore } from '../../store/authStore'
+import Loading from '../../components/Loading.vue'
 
 // Store
 const authStore = useAuthStore()
@@ -31,9 +32,6 @@ const officialResult = ref(null)
 
 const maxScale = computed(() => {
     if (scales.value.length === 0) return 5
-    // Filter scales by period if needed, or assume fetched scales are already filtered (api returns filtered?)
-    // Actually scales api returns all? No, implementation of fetchScales gets all.
-    // Let's filter by selectedPeriod
     const periodScales = scales.value.filter(s => s.period_id == selectedPeriod.value)
     if (periodScales.length === 0) return 5
     return Math.max(...periodScales.map(s => Number(s.value)))
@@ -78,7 +76,6 @@ const evaluationResults = computed(() => {
 
 // คะแนนรวม
 const totalScores = computed(() => {
-    // คะแนนตนเองคำนวณแบบ Weighted Summary (Frontend Calculation)
     // Formula: (Score / MaxScale) * Weight
     const selfTotal = evaluationResults.value.reduce((sum, r) => {
         if (r.self_score === null) return sum
@@ -209,6 +206,11 @@ watch(selectedPeriod, async (newVal) => {
     // Logic updated
 })
 
+// Export PDF function
+const handleExportPdf = () => {
+    window.print()
+}
+
 onMounted(() => {
     loadData()
 })
@@ -233,14 +235,19 @@ onMounted(() => {
                         {{ period.name }}
                     </option>
                 </select>
+
+                <!-- Export PDF Button -->
+                <button @click="handleExportPdf"
+                    class="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 text-white font-medium hover:bg-emerald-600 transition-colors shadow-md hover:shadow-lg print:hidden">
+                    <component :is="lucide.FileDown" class="w-4 h-4" />
+                    Export PDF
+                </button>
             </div>
         </div>
 
         <!-- Loading -->
-        <div v-if="isLoading" class="text-center py-12 text-zinc-400">
-            <component :is="lucide.Loader2" class="w-8 h-8 animate-spin mx-auto mb-2" />
-            กำลังโหลดข้อมูล...
-        </div>
+        <!-- Loading -->
+        <Loading v-if="isLoading" />
 
         <!-- ไม่พบข้อมูล -->
         <div v-else-if="!myEvaluateeInfo" class="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-center">
@@ -319,6 +326,32 @@ onMounted(() => {
                             </tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- ความเห็นจากกรรมการ -->
+            <div class="bg-white rounded-2xl border border-zinc-200 overflow-hidden">
+                <div class="px-6 py-4 border-b border-zinc-100 bg-zinc-50/50">
+                    <h3 class="font-semibold text-zinc-900 flex items-center gap-2">
+                        <component :is="lucide.MessageCircle" class="w-5 h-5 text-sky-500" />
+                        ความเห็นจากกรรมการ
+                    </h3>
+                </div>
+                <div class="divide-y divide-zinc-100">
+                    <div v-if="evaluationResults.filter(r => r.committee_evaluations.some(e => e.comment)).length === 0"
+                        class="px-6 py-8 text-center text-zinc-400">
+                        ยังไม่มีความเห็นจากกรรมการ
+                    </div>
+                    <template v-else>
+                        <div v-for="result in evaluationResults.filter(r => r.committee_evaluations.some(e => e.comment))"
+                            :key="'comment-' + result.indicator_id" class="p-4">
+                            <div class="text-sm font-medium text-zinc-700 mb-2">{{ result.indicator_name }}</div>
+                            <div v-for="evalItem in result.committee_evaluations.filter(e => e.comment)"
+                                :key="'eval-' + evalItem.id" class="bg-zinc-50 rounded-lg p-3 mb-2 last:mb-0">
+                                <p class="text-sm text-zinc-600">{{ evalItem.comment }}</p>
+                            </div>
+                        </div>
+                    </template>
                 </div>
             </div>
         </div>

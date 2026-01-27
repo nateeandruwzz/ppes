@@ -5,6 +5,7 @@ import { toast } from 'vue-sonner'
 import { useRouter } from 'vue-router'
 import ProfileDialog from './ProfileDialog.vue'
 import * as lucide from 'lucide-vue-next'
+import { BASE_URL } from '@/config'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -52,6 +53,13 @@ const getUserInitials = () => {
     return (first + last).toUpperCase()
 }
 
+const getProfilePictureUrl = () => {
+    if (user.value?.profile_img) {
+        return `${BASE_URL}${user.value.profile_img}`
+    }
+    return null
+}
+
 // Close dropdown when clicking outside
 const handleClickOutside = (e) => {
     const dropdown = document.getElementById('user-dropdown')
@@ -79,8 +87,10 @@ onUnmounted(() => {
             <div class="flex items-center gap-2">
                 <!-- Avatar -->
                 <div
-                    class="w-10 h-10 rounded-full bg-sky-100 flex items-center justify-center text-sm font-bold text-sky-600 flex-shrink-0">
-                    {{ getUserInitials() }}
+                    class="w-10 h-10 rounded-full bg-sky-100 flex items-center justify-center text-sm font-bold text-sky-600 flex-shrink-0 overflow-hidden border border-sky-100">
+                    <img v-if="getProfilePictureUrl()" :src="getProfilePictureUrl()" alt="Profile"
+                        class="w-full h-full object-cover" />
+                    <span v-else>{{ getUserInitials() }}</span>
                 </div>
                 <div v-if="isOpen" class="flex flex-col w-full text-left min-w-0">
                     <span class="text-sm font-medium text-zinc-800 truncate">{{ user?.first_name }} {{ user?.last_name

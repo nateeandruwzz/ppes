@@ -46,7 +46,7 @@
         <!-- Content - Assignment Cards -->
         <div v-else class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <div v-for="assignment in myAssignments" :key="assignment.id"
-                class="group bg-white rounded-xl border border-zinc-200 p-5 hover:border-sky-200 hover:shadow-md transition-all duration-200 flex flex-col">
+                class="group bg-white rounded-xl border border-zinc-200 p-5 hover:shadow-md transition-all duration-200 flex flex-col">
                 <div class="flex justify-between items-start mb-4">
                     <div class="flex items-center gap-3">
                         <div
@@ -61,7 +61,7 @@
                         </div>
                     </div>
                     <span :class="getStatusClass(assignment)" class="text-xs px-2 py-1 rounded-full font-medium">
-                        {{ getStatusLabel(assignment) }}
+                        {{ isSummarized(assignment) ? 'สรุปผลแล้ว' : getStatusLabel(assignment) }}
                     </span>
                 </div>
 
@@ -82,11 +82,21 @@
                     </div>
                 </div>
 
-                <button @click="goToEvaluation(assignment)"
-                    class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-sky-500 text-white font-medium hover:bg-sky-600 transition-colors cursor-pointer">
-                    <component :is="lucide.ClipboardCheck" class="w-4 h-4" />
-                    {{ getStatusLabel(assignment) === 'ประเมินครบแล้ว' ? 'ดู/แก้ไขการประเมิน' : 'ประเมิน' }}
-                </button>
+                <div class="flex gap-2">
+                    <button @click="goToEvaluation(assignment)"
+                        class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-sky-500 text-white font-medium hover:bg-sky-600 transition-colors cursor-pointer">
+                        <component :is="lucide.ClipboardCheck" class="w-4 h-4" />
+                        {{ getStatusLabel(assignment) === 'ประเมินครบแล้ว' ? 'ดู/แก้ไข' : 'ประเมิน' }}
+                    </button>
+                    
+                    <!-- ปุ่มสรุปผล สำหรับประธานเท่านั้น -->
+                    <button v-if="isChairman(assignment) && getStatusLabel(assignment) === 'ประเมินครบแล้ว'"
+                        @click="goToSummary(assignment)"
+                        class="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 text-white font-medium hover:bg-emerald-600 transition-colors cursor-pointer">
+                        <component :is="lucide.FileCheck" class="w-4 h-4" />
+                        สรุปผล
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -112,6 +122,7 @@ const evaluatees = ref([])
 const users = ref([])
 const departments = ref([])
 const positions = ref([])
+const committeeSummaries = ref([])
 const isLoading = ref(false)
 
 // ตัวกรอง
@@ -176,6 +187,10 @@ const getStatusLabel = (assignment) => {
 }
 
 const getStatusClass = (assignment) => {
+    // ถ้าสรุปผลแล้ว แสดงสีม่วง
+    if (isSummarized(assignment)) {
+        return 'bg-purple-50 text-purple-700'
+    }
     const status = getStatusLabel(assignment)
     switch (status) {
         case 'ประเมินครบแล้ว': return 'bg-green-50 text-green-700'
@@ -185,8 +200,24 @@ const getStatusClass = (assignment) => {
     }
 }
 
+// เช็คว่าสรุปผลแล้วหรือยัง
+const isSummarized = (assignment) => {
+    return committeeSummaries.value.some(s =>
+        s.period_id == assignment.period_id &&
+        s.evaluatee_id == assignment.evaluatee_id
+    )
+}
+
 const goToEvaluation = (assignment) => {
     router.push(`/committee/evaluate/${assignment.period_id}/${assignment.evaluatee_id}`)
+}
+
+const goToSummary = (assignment) => {
+    router.push(`/committee/summary/${assignment.period_id}/${assignment.evaluatee_id}`)
+}
+
+const isChairman = (assignment) => {
+    return assignment.role === 'Chairman'
 }
 
 // API Calls
@@ -246,6 +277,13 @@ const fetchPositions = async () => {
     }
 }
 
+const fetchCommitteeSummaries = async () => {
+    const response = await api.get('/committeeSummary')
+    if (response.data.status === 1) {
+        committeeSummaries.value = response.data.data
+    }
+}
+
 // Load Data
 const loadData = async () => {
     isLoading.value = true
@@ -258,7 +296,8 @@ const loadData = async () => {
             fetchEvaluatees(),
             fetchUsers(),
             fetchDepartments(),
-            fetchPositions()
+            fetchPositions(),
+            fetchCommitteeSummaries()
         ])
     } catch (error) {
         console.error('Error loading data:', error)

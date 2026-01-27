@@ -1,8 +1,6 @@
 <template>
     <div class='py-5 px-5 md:px-15'>
-        <div v-if="isLoading" class="flex items-center justify-center py-20">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500"></div>
-        </div>
+        <Loading v-if="isLoading" />
 
         <div v-else-if="isError"
             class="p-8 bg-red-50 text-red-600 rounded-2xl border border-red-200 text-center shadow-sm">
@@ -28,31 +26,31 @@
                             <p class="text-xs text-zinc-500 mt-1">กรุณาประเมินตามตัวชี้วัดที่กำหนด</p>
                         </div>
                     </div>
-                    <span
-                        class="self-start md:self-auto px-3 py-1 rounded-full bg-sky-50 text-sky-700 text-sm font-medium">
-                        {{ periodName }}
-                    </span>
                 </div>
 
                 <!-- ข้อมูลผู้ถูกประเมิน -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="flex items-center gap-3">
-                        <div
-                            class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
-                            <component :is="lucide.User" class="w-5 h-5" />
-                        </div>
+                <div class="flex items-center justify-between gap-6">
+                    <!-- ข้อมูลส่วนตัว -->
+                    <div class="flex items-center gap-8">
                         <div>
-                            <span class="text-xs text-zinc-500 block mb-0.5">ผู้รับการประเมิน</span>
-                            <div class="font-semibold text-sm text-zinc-900">{{ evaluateeName }}</div>
+                            <span class="text-xs text-zinc-500 block mb-1">ผู้รับการประเมิน</span>
+                            <div class="font-bold text-base text-zinc-900">{{ evaluateeName }}</div>
+                        </div>
+                        <div class="h-8 w-px bg-zinc-200"></div>
+                        <div>
+                            <span class="text-xs text-zinc-500 block mb-1">ตำแหน่ง</span>
+                            <div class="font-medium text-sm text-zinc-700">{{ evaluateePosition }}</div>
+                        </div>
+                        <div class="h-8 w-px bg-zinc-200"></div>
+                        <div>
+                            <span class="text-xs text-zinc-500 block mb-1">หน่วยงาน</span>
+                            <div class="font-medium text-sm text-zinc-700">{{ evaluateeDepartment }}</div>
                         </div>
                     </div>
-                    <div>
-                        <span class="text-xs text-zinc-500 block mb-0.5">ตำแหน่ง</span>
-                        <div class="font-medium text-sm text-zinc-700">{{ evaluateePosition }}</div>
-                    </div>
-                    <div>
-                        <span class="text-xs text-zinc-500 block mb-0.5">หน่วยงาน</span>
-                        <div class="font-medium text-sm text-zinc-700">{{ evaluateeDepartment }}</div>
+                    <!-- รูปโปรไฟล์ (ขวา) - สี่เหลี่ยม -->
+                    <div
+                        class="w-24 h-24 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600 border-4 border-amber-50 shrink-0">
+                        <component :is="lucide.User" class="w-12 h-12" />
                     </div>
                 </div>
 
@@ -68,7 +66,7 @@
                 </div>
             </div>
 
-            <!-- Self Evaluation Summary (ถ้ามี) -->
+            <!-- Self Evaluation Summary -->
             <div v-if="selfEvaluations.length > 0" class="bg-amber-50 rounded-xl border border-amber-200 p-5">
                 <div class="flex items-center gap-2 mb-4">
                     <component :is="lucide.FileText" class="w-5 h-5 text-amber-600" />
@@ -144,6 +142,43 @@
                                 <div v-else
                                     class="text-sm text-zinc-400 italic bg-zinc-50 p-4 rounded-xl border border-dashed border-zinc-200 text-center">
                                     ยังไม่ได้ประเมินตนเอง
+                                </div>
+
+                                <!-- หลักฐานประกอบ -->
+                                <div v-if="getEvidenceForIndicator(indicator.id)" class="mt-4">
+                                    <h4 class="font-semibold text-sm text-zinc-900 flex items-center gap-2 mb-3">
+                                        <component :is="lucide.Paperclip" class="w-4 h-4 text-sky-500" />
+                                        หลักฐานประกอบ
+                                    </h4>
+                                    <div class="bg-sky-50 rounded-xl p-4 border border-sky-100">
+                                        <!-- แสดงรูปภาพ preview -->
+                                        <div v-if="isImageFile(getEvidenceForIndicator(indicator.id).file_path)"
+                                            class="mb-3">
+                                            <img :src="getEvidenceUrl(getEvidenceForIndicator(indicator.id).file_path)"
+                                                class="max-h-48 rounded-lg object-contain"
+                                                @click="window.open(getEvidenceUrl(getEvidenceForIndicator(indicator.id).file_path))"
+                                                alt="หลักฐาน" />
+                                        </div>
+                                        <!-- แสดง link ไฟล์หรือ URL -->
+                                        <div class="flex items-center gap-2">
+                                            <component :is="lucide.FileText" class="w-4 h-4 text-sky-600 shrink-0" />
+                                            <a v-if="getEvidenceForIndicator(indicator.id).file_path"
+                                                :href="getEvidenceUrl(getEvidenceForIndicator(indicator.id).file_path)"
+                                                target="_blank"
+                                                class="text-sm text-sky-600 hover:underline font-medium truncate">
+                                                {{ getEvidenceForIndicator(indicator.id).file_path.split('/').pop() }}
+                                            </a>
+                                            <a v-else-if="getEvidenceForIndicator(indicator.id).url"
+                                                :href="getEvidenceForIndicator(indicator.id).url" target="_blank"
+                                                class="text-sm text-sky-600 hover:underline font-medium truncate">
+                                                {{ getEvidenceForIndicator(indicator.id).url }}
+                                            </a>
+                                        </div>
+                                        <p v-if="getEvidenceForIndicator(indicator.id).description"
+                                            class="text-xs text-zinc-500 mt-2 italic">
+                                            {{ getEvidenceForIndicator(indicator.id).description }}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
 
@@ -284,6 +319,8 @@ import { api } from '../../services/axios'
 import * as lucide from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { useAuthStore } from '../../store/authStore'
+import Loading from '../../components/Loading.vue'
+import { BASE_URL } from '../../config'
 
 const route = useRoute()
 const router = useRouter()
@@ -451,9 +488,12 @@ const fetchEvaluateeInfo = async () => {
 }
 
 const fetchIndicators = async () => {
-    const response = await api.get('/indicator')
+    const url = periodId.value ? `/indicator/period/${periodId.value}` : '/indicator'
+    const response = await api.get(url)
     if (response.data.status === 1) {
         indicators.value = response.data.data
+    } else {
+        indicators.value = []
     }
 }
 
@@ -510,6 +550,41 @@ const fetchPositions = async () => {
     }
 }
 
+// State & fetch หลักฐานของผู้ถูกประเมิน
+const evidences = ref([])
+
+const fetchEvidences = async () => {
+    try {
+        const response = await api.get(`/evidence/evaluatee/${evaluateeId.value}`)
+        if (response.data.status === 1) {
+            evidences.value = response.data.data
+        } else {
+            evidences.value = []
+        }
+    } catch (err) {
+        console.error('Error fetching evidences:', err)
+        evidences.value = []
+    }
+}
+
+// ดึงหลักฐานสำหรับตัวชี้วัดนี้
+const getEvidenceForIndicator = (indicatorId) => {
+    return evidences.value.find(e => e.indicator_id == indicatorId)
+}
+
+// ตรวจสอบว่าเป็นรูปภาพหรือไม่
+const isImageFile = (filePath) => {
+    if (!filePath) return false
+    const ext = filePath.split('.').pop()?.toLowerCase()
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(ext)
+}
+
+// สร้าง URL สำหรับเปิดไฟล์
+const getEvidenceUrl = (filePath) => {
+    if (!filePath) return ''
+    return `${BASE_URL}${filePath}`
+}
+
 // Submit
 const handleSubmit = async () => {
     // Validation
@@ -564,7 +639,8 @@ const loadData = async () => {
             fetchSelfEvaluations(),
             fetchUsers(),
             fetchDepartments(),
-            fetchPositions()
+            fetchPositions(),
+            fetchEvidences()
         ])
         initFormData()
     } catch (error) {

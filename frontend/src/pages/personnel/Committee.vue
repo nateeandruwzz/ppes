@@ -16,9 +16,9 @@ const isDeleteModalOpen = ref(false)
 const deleteId = ref(null)
 
 // คำนำหน้าชื่อ
-const prefixOptions = ['นาย', 'นาง', 'นางสาว', 'ดร.', 'ผศ.', 'รศ.', 'ศ.']
+const prefixOptions = ['นาย', 'นาง', 'นางสาว']
 
-// Form Data - เหมือนหน้าสมัครสมาชิก
+// Form Data
 const form = reactive({
     prefix: '',
     first_name: '',
@@ -38,7 +38,7 @@ const resetForm = () => {
     form.phone = ''
 }
 
-// ดึงข้อมูลกรรมการ (ผู้ใช้ที่มี role Evaluator)
+// ดึงข้อมูลกรรมการ
 const fetchCommittees = async () => {
     isLoading.value = true
     try {
@@ -67,7 +67,7 @@ const closeModal = () => {
     isModalOpen.value = false
 }
 
-// เพิ่มกรรมการ (ใช้ API Register แต่ส่ง role เป็น Evaluator)
+// เพิ่มกรรมการ
 const handleSubmit = async () => {
     try {
         await api.post('/user/register', {
@@ -77,7 +77,7 @@ const handleSubmit = async () => {
             email: form.email,
             password: form.password,
             phone: form.phone,
-            role: 'Evaluator'  // กำหนด role เป็นกรรมการ
+            role: 'Evaluator'
         })
         toast.success('เพิ่มกรรมการสำเร็จ')
         closeModal()
@@ -192,7 +192,7 @@ onMounted(() => {
             </div>
         </div>
 
-        <!-- Modal สำหรับเพิ่มกรรมการ (Form เหมือนหน้าสมัคร) -->
+        <!-- Modal สำหรับเพิ่มกรรมการ -->
         <Modal :isOpen="isModalOpen" title="เพิ่มกรรมการใหม่" size="lg" @close="closeModal">
             <form @submit.prevent="handleSubmit" class="space-y-4">
                 <!-- คำนำหน้า -->

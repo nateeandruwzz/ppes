@@ -14,7 +14,7 @@ const periods = ref([])
 const isLoading = ref(false)
 const isModalOpen = ref(false)
 const isDeleteModalOpen = ref(false)
-const modalMode = ref('create') // 'create' or 'edit'
+const modalMode = ref('create')
 const deleteId = ref(null)
 
 // Form Data
@@ -63,7 +63,6 @@ const openModal = (mode, period = null) => {
         form.end_date = period.end_date ? dayjs(period.end_date).format('YYYY-MM-DD') : ''
         form.status = period.status
     } else {
-        // รีเซ็ตฟอร์มสำหรับการเพิ่มใหม่
         form.id = null
         form.name = ''
         form.start_date = ''
@@ -77,7 +76,7 @@ const closeModal = () => {
     isModalOpen.value = false
 }
 
-// บันทึกข้อมูล (เพิ่ม/แก้ไข)
+// บันทึกข้อมูล
 const handleSubmit = async () => {
     try {
         const payload = {
@@ -149,9 +148,7 @@ const getStatusInfo = (period) => {
     const status = period.status
     if (!status) return { label: '-', color: 'bg-zinc-100 text-zinc-600' }
 
-    // แปลงเป็นตัวเล็กเพื่อเปรียบเทียบ (เผื่อ Database ส่งมาเป็น Active/Inactive)
     const normalized = String(status).toLowerCase().trim()
-
     const found = statusOptions.find(s => s.value.toLowerCase() === normalized)
 
     return found || { label: status, color: 'bg-zinc-100 text-zinc-600' }
