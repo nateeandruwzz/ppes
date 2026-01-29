@@ -17,6 +17,7 @@ import evaluationCommittee from "./routes/evaluationCommitteeRoute.js";
 import committeeSummary from "./routes/committeeSummaryRoute.js";
 import committeeEvaluation from "./routes/committeeEvaluationRoute.js";
 import uploadRoute from "./routes/uploadRoute.js";
+import indicatorReference from "./routes/indicatorReferenceRoute.js";
 import path from "path";
 
 const app = express();
@@ -42,6 +43,7 @@ app.use("/api/committeeSummary", committeeSummary);
 app.use("/api/committee", evaluationCommittee);
 app.use("/api/evaluation", committeeEvaluation);
 app.use("/api/upload", uploadRoute);
+app.use("/api/indicator-reference", indicatorReference);
 
 // --- 404 Handler ---
 app.use((req, res) => {

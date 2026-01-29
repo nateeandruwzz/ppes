@@ -14,25 +14,33 @@ export default class CommitteeSummary {
     return rows;
   }
 
-  static async create(period_id,evaluatee_id,committee_user_id,summary,signature_path) {
+  static async getByEvaluateeAndPeriod(evaluatee_id, period_id) {
+    const [rows] = await pool.query(
+      "SELECT * FROM committee_summary WHERE evaluatee_id = ? AND period_id = ? LIMIT 1",
+      [evaluatee_id, period_id]
+    );
+    return rows;
+  }
+
+  static async create(period_id, evaluatee_id, committee_user_id, summary, signature_path) {
     const [result] = await pool.query(
       "INSERT INTO committee_summary (period_id,evaluatee_id,committee_user_id,summary,signature_path) VALUES (?,?,?,?,?)",
-      [ period_id,evaluatee_id,committee_user_id,summary,signature_path ]
+      [period_id, evaluatee_id, committee_user_id, summary, signature_path]
     );
     return result;
   }
-  
-  static async update(id,period_id,evaluatee_id,committee_user_id,summary,signature_path) {
+
+  static async update(id, period_id, evaluatee_id, committee_user_id, summary, signature_path) {
     const [result] = await pool.query(
-      "update committee_summary set period_id=?,evaluatee_id=?,committee_user_id=?,,summary=?,signature_path=? where id = ?",
-      [period_id,evaluatee_id,committee_user_id,,summary,signature_path,id]
+      "update committee_summary set period_id=?,evaluatee_id=?,committee_user_id=?,summary=?,signature_path=? where id = ?",
+      [period_id, evaluatee_id, committee_user_id, summary, signature_path, id]
     );
     return result;
   }
-  
+
   static async delete(id) {
     const [result] = await pool.query(
-      "delete from committee_summary where id = ?",[id]
+      "delete from committee_summary where id = ?", [id]
     );
     return result;
   }

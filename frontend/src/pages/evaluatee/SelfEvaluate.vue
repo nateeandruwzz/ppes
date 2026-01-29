@@ -166,9 +166,12 @@ const fetchIndicators = async () => {
 }
 
 const fetchPeriods = async () => {
-    const response = await api.get('/period')
+    if (!currentUser.value?.id) return
+    const response = await api.get(`/period/user/${currentUser.value.id}`)
     if (response.data.status === 1) {
         periods.value = response.data.data
+    } else {
+        periods.value = []
     }
 }
 

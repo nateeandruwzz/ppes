@@ -207,6 +207,60 @@ export const getTrackingData = async (req, res) => {
             };
         });
 
+        // NEW: สร้างข้อมูล Tracking ฝั่งกรรมการ (Committee Tracking)
+        const committeeIds = [...new Set(committees.map(c => c.committee_user_id))];
+        const committeeTracking = committeeIds.map(uid => {
+            const user = users.find(u => u.id === uid);
+            // รายการที่ได้รับมอบหมาย
+            const myAssignments = committees.filter(c => c.committee_user_id === uid);
+            // รายการที่ประเมินแล้ว (มีคะแนนอย่างน้อย 1 รายการ)
+            const evaluatedCount = myAssignments.filter(assign => {
+                return committeeEvaluations.some(e =>
+                    e.evaluatee_id == assign.evaluatee_id &&
+                    e.committee_user_id == uid
+                );
+            }).length;
+
+            // NEW: รายละเอียดรายบุคคล
+            const details = myAssignments.map(assign => {
+                // Find evaluations for this evaluatee by this committee
+                const evals = committeeEvaluations.filter(e =>
+                    e.evaluatee_id == assign.evaluatee_id &&
+                    e.committee_user_id == uid
+                );
+
+                let score = '-';
+                let status = 'pending';
+
+                if (evals.length > 0) {
+                    status = 'completed';
+                    // Calculate simple average score for display
+                    const sum = evals.reduce((a, b) => a + Number(b.score), 0);
+                    score = (sum / evals.length).toFixed(2);
+                }
+
+                // Get Evaluatee Name
+                const evaluatee = evaluatees.find(e => e.id == assign.evaluatee_id);
+                const evUser = users.find(u => u.id == evaluatee?.user_id);
+
+                return {
+                    id: assign.evaluatee_id,
+                    name: evUser ? `${evUser.first_name} ${evUser.last_name}` : 'ไม่ระบุชื่อ',
+                    status,
+                    score
+                };
+            });
+
+            return {
+                id: uid,
+                name: user ? `${user.first_name} ${user.last_name}` : 'Unknown',
+                totalEvaluatees: myAssignments.length,
+                evaluatedCount: evaluatedCount,
+                percent: myAssignments.length > 0 ? Math.round((evaluatedCount / myAssignments.length) * 100) : 0,
+                details // Add details to response
+            };
+        });
+
         // สรุปสถิติ
         const stats = {
             total: trackingData.length,
@@ -218,7 +272,11 @@ export const getTrackingData = async (req, res) => {
         return res.json({
             status: 1,
             message: "สำเร็จ",
-            data: { trackingData, stats }
+            data: {
+                trackingData,
+                committeeTracking,
+                stats
+            }
         });
 
     } catch (err) {
@@ -372,6 +430,7 @@ export const getEvaluateeSummary = async (req, res) => {
             data: {
                 evaluatee: {
                     id: evaluatee[0].id,
+                    user_id: evaluatee[0].user_id, // Fix Profile Image
                     name: user ? `${user.first_name} ${user.last_name}` : '-',
                     department: dept?.name || '-',
                     position: pos?.name || '-'

@@ -58,4 +58,11 @@ export default class SelfEvaluation {
     );
     return result;
   }
+
+  static async deleteByIndicator(indicator_id) {
+    const [result] = await pool.query(
+      "DELETE FROM self_evaluations WHERE indicator_id = ?", [indicator_id]
+    );
+    return result;
+  }
 }

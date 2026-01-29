@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '../../services/axios'
+import { BASE_URL } from '../../config'
 import * as lucide from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { useAuthStore } from '../../store/authStore'
@@ -23,13 +24,28 @@ const evaluateeInfo = ref(null)
 const scores = ref({ selfScore: '0', committeeScore: '0', averageScore: '0' })
 const period = ref(null)
 const committeeInfo = ref(null)
+const users = ref([])
 
-// Signature - เปลี่ยนเป็น Input ชื่อ
+// Signature
 const chairmanName = ref('')
+const isLocked = ref(false) // สถานะล็อกหากลงนามแล้ว
 
 // Computed
 const isChairman = computed(() => {
     return committeeInfo.value?.role === 'Chairman' || committeeInfo.value !== null
+})
+
+const evaluateeProfileImg = computed(() => {
+    if (!evaluateeInfo.value) {
+        return null
+    }
+
+    const user = users.value.find(u => u.id == evaluateeInfo.value.user_id)
+
+    if (user && user.profile_img) {
+        return `${BASE_URL}${user.profile_img}`
+    }
+    return null 
 })
 
 // Save & Submit
@@ -65,7 +81,12 @@ const handleSubmit = async () => {
         await api.post('/committeeSummary', summaryPayload)
 
         toast.success('บันทึกผลการประเมินสำเร็จ!')
-        router.push('/committee/evaluate')
+        isLocked.value = true // ล็อกทันทีหลังบันทึก
+
+        // รอสักครู่แล้วกลับหน้าหลัก
+        setTimeout(() => {
+            router.push('/committee/evaluate')
+        }, 1500)
 
     } catch (error) {
         console.error('Error saving result:', error)
@@ -84,10 +105,11 @@ const handleExport = () => {
 const loadData = async () => {
     isLoading.value = true
     try {
-        const [summaryRes, periodRes, commInfoRes] = await Promise.all([
+        const [summaryRes, periodRes, commInfoRes, usersRes] = await Promise.all([
             api.get(`/evaluationResult/summary/${periodId.value}/${evaluateeId.value}`),
             api.get(`/period/${periodId.value}`),
-            api.get('/committee')
+            api.get('/committee'),
+            api.get('/user')
         ])
 
         if (summaryRes.data.status === 1) {
@@ -95,12 +117,27 @@ const loadData = async () => {
             scores.value = summaryRes.data.data.scores
         }
         if (periodRes.data.status === 1) period.value = periodRes.data.data
+        if (usersRes.data.status === 1) users.value = usersRes.data.data
         if (commInfoRes.data.status === 1) {
             committeeInfo.value = commInfoRes.data.data.find(c =>
                 c.committee_user_id === currentUser.value?.id &&
                 c.evaluatee_id == evaluateeId.value &&
                 c.period_id == periodId.value
             )
+        }
+
+        // Fetch existing committee summary (signature)
+        try {
+            const existingRes = await api.get(`/committeeSummary/${periodId.value}/${evaluateeId.value}`)
+            if (existingRes.data.status === 1) {
+                const data = existingRes.data.data
+                if (data.signature_path) {
+                    chairmanName.value = data.signature_path
+                    isLocked.value = true // ล็อกหากมีข้อมูลแล้ว
+                }
+            }
+        } catch (err) {
+            // No existing summary found, expected for new evaluation
         }
 
     } catch (error) {
@@ -118,7 +155,6 @@ onMounted(() => {
 <template>
     <div class="py-5 px-5 md:px-15">
         <!-- Loading -->
-        <!-- Loading -->
         <Loading v-if="isLoading" />
 
         <div v-else class="space-y-6">
@@ -135,13 +171,6 @@ onMounted(() => {
                             <h1 class="text-xl font-bold text-zinc-900">สรุปผลการประเมิน</h1>
                             <p class="text-xs text-zinc-500 mt-1">ตรวจสอบคะแนนและลงนามยืนยัน</p>
                         </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button @click="handleExport"
-                            class="flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-100 text-zinc-700 text-sm font-medium hover:bg-zinc-200 transition-colors print:hidden">
-                            <component :is="lucide.FileDown" class="w-4 h-4" />
-                            Export
-                        </button>
                     </div>
                 </div>
 
@@ -165,9 +194,15 @@ onMounted(() => {
                         </div>
                     </div>
                     <!-- รูปโปรไฟล์ -->
-                    <div
-                        class="w-24 h-24 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600 border-4 border-amber-50 shrink-0">
-                        <component :is="lucide.User" class="w-12 h-12" />
+                    <div class="shrink-0">
+                        <div v-if="evaluateeProfileImg"
+                            class="w-24 h-24 rounded-2xl overflow-hidden border-4 border-amber-50">
+                            <img :src="evaluateeProfileImg" alt="Profile" class="w-full h-full object-cover">
+                        </div>
+                        <div v-else
+                            class="w-24 h-24 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600 border-4 border-amber-50">
+                            <component :is="lucide.User" class="w-12 h-12" />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -200,13 +235,25 @@ onMounted(() => {
                     <component :is="lucide.PenTool" class="w-5 h-5 text-sky-500" />
                     ลงนามประธานกรรมการ
                 </h2>
+
+                <!-- Status Banner if Locked -->
+                <div v-if="isLocked"
+                    class="mb-4 bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3 text-green-700">
+                    <component :is="lucide.CheckCircle2" class="w-5 h-5" />
+                    <div>
+                        <p class="font-bold text-sm">ประเมินและลงนามแล้ว</p>
+                        <p class="text-xs opacity-80">ไม่สามารถแก้ไขได้</p>
+                    </div>
+                </div>
+
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-zinc-700 mb-2">
                             ชื่อ-นามสกุล ประธานกรรมการ
                         </label>
                         <input v-model="chairmanName" type="text" placeholder="กรอกชื่อ-นามสกุลเพื่อยืนยันการลงนาม"
-                            class="w-full px-4 py-3 rounded-xl border border-zinc-300 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all text-lg" />
+                            :disabled="isLocked"
+                            class="w-full px-4 py-3 rounded-xl border border-zinc-300 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all text-lg disabled:bg-zinc-100 disabled:text-zinc-500 disabled:cursor-not-allowed" />
                     </div>
                     <p class="text-sm text-zinc-500 flex items-center gap-1">
                         <component :is="lucide.Info" class="w-4 h-4" />
@@ -219,9 +266,10 @@ onMounted(() => {
             <div class="flex items-center justify-end gap-3 print:hidden">
                 <button @click="router.back()"
                     class="px-6 py-3 rounded-xl bg-zinc-100 text-zinc-700 font-medium hover:bg-zinc-200 transition-colors">
-                    ยกเลิก
+                    ย้อนกลับ
                 </button>
-                <button v-if="isChairman" @click="handleSubmit" :disabled="isSaving || !chairmanName.trim()"
+                <button v-if="isChairman && !isLocked" @click="handleSubmit"
+                    :disabled="isSaving || !chairmanName.trim()"
                     class="flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500 text-white font-bold hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                     <component :is="isSaving ? lucide.Loader2 : lucide.CheckCircle"
                         :class="['w-5 h-5', isSaving && 'animate-spin']" />

@@ -75,14 +75,31 @@ export const updateIndicator = async (req, res) => {
     }
 };
 
+import CommitteeEvaluation from "../models/committeeEvaluationModel.js";
+import SelfEvaluation from "../models/selfEvaluationModel.js";
+import Evidence from "../models/evidenceModel.js";
+
 export const deleteIndicator = async (req, res) => {
     try {
-        const result = await Indicator.delete(req.params.id);
+        const id = req.params.id;
+
+        // 1. Delete related committee evaluations
+        await CommitteeEvaluation.deleteByIndicator(id);
+
+        // 2. Delete related self evaluations
+        await SelfEvaluation.deleteByIndicator(id);
+
+        // 3. Delete related evidences
+        await Evidence.deleteByIndicator(id);
+
+        // 4. Delete the indicator itself
+        const result = await Indicator.delete(id);
         if (result.affectedRows === 0) {
             return res.status(404).json({ status: 0, message: "ไม่พบข้อมูล" });
         }
-        res.json({ status: 1, message: "สำเร็จ", data: result });
+        res.json({ status: 1, message: "ลบตัวชี้วัดและข้อมูลที่เกี่ยวข้องสำเร็จ", data: result });
     } catch (err) {
-        return res.status(500).json({ status: 0, message: "เซิร์ฟเวอร์ผิดพลาด" });
+        console.error("Delete Indicator Error:", err);
+        return res.status(500).json({ status: 0, message: "เซิร์ฟเวอร์ผิดพลาด", error: err.message });
     }
 };

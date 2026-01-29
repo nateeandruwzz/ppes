@@ -39,11 +39,14 @@ const sizeClasses = {
 
 <template>
     <Teleport to="body">
-        <div v-if="isOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        <div v-if="isOpen"
+            class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-8 pb-8 bg-black/50 backdrop-blur-sm overflow-y-auto"
             @click.self="closeModal">
-            <div class="bg-white rounded-2xl shadow-xl w-full p-6" :class="sizeClasses[size]">
+            <div class="bg-white rounded-2xl shadow-xl w-full p-6 my-auto max-h-[90vh] overflow-y-auto"
+                :class="sizeClasses[size]">
                 <!-- Header -->
-                <div class="flex items-center justify-between mb-6">
+                <div
+                    class="flex items-center justify-between mb-6 sticky top-0 bg-white pb-2 -mt-2 pt-2 -mx-6 px-6 border-b border-zinc-100">
                     <h3 class="text-xl font-bold text-zinc-800">{{ title }}</h3>
                     <button @click="closeModal" class="text-zinc-400 hover:text-zinc-600 transition-colors">
                         <component :is="lucide.X" class="w-5 h-5" />

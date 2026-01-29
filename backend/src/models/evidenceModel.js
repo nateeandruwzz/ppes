@@ -52,4 +52,11 @@ export default class Evidence {
     );
     return result;
   }
+
+  static async deleteByIndicator(indicator_id) {
+    const [result] = await pool.query(
+      "DELETE FROM evidences WHERE indicator_id = ?", [indicator_id]
+    );
+    return result;
+  }
 }

@@ -48,4 +48,11 @@ export default class CommitteeEvaluation {
     );
     return result;
   }
+
+  static async deleteByIndicator(indicator_id) {
+    const [result] = await pool.query(
+      "DELETE FROM committee_evaluations WHERE indicator_id = ?", [indicator_id]
+    );
+    return result;
+  }
 }

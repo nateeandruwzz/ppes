@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { api } from '../../services/axios'
+import { BASE_URL } from '../../config'
 import { useRouter } from 'vue-router'
 import * as lucide from 'lucide-vue-next'
 import { useAuthStore } from '../../store/authStore'
@@ -17,18 +18,25 @@ const selfEvaluations = ref([])
 const indicators = ref([])
 const positions = ref([])
 const departments = ref([])
+const selectedPeriodId = ref(null)
 
 console.log('Info: ', myEvaluateeInfo.value);
 
 // Computed Stats
 const activePeriod = computed(() => {
-    // หา period ที่ยัง open อยู่ (เทียบกับวันปัจจุบัน)
+    // If user selected a period, use that
+    if (selectedPeriodId.value) {
+        const selected = periods.value.find(p => p.id == selectedPeriodId.value)
+        if (selected) return selected
+    }
+    // ถ้าไม่ได้เลือก ให้หา period ที่ยัง open อยู่ (เทียบกับวันปัจจุบัน)
     const now = new Date()
-    return periods.value.find(p => {
+    const current = periods.value.find(p => {
         const start = new Date(p.start_date)
         const end = new Date(p.end_date)
         return now >= start && now <= end
-    }) || periods.value[0] // fallback to first period if none active
+    })
+    return current || periods.value[0] // fallback to first period if none active
 })
 
 const periodEvaluations = computed(() => {
@@ -91,24 +99,34 @@ const goToResults = () => {
 const loadData = async () => {
     isLoading.value = true
     try {
-        const [evaluateeRes, periodRes, selfEvalRes, indicatorRes, posRes, deptRes] = await Promise.all([
-            api.get('/evaluatee'),
-            api.get('/period'),
+        // First get current user evaluatee info
+        const evaluateeRes = await api.get('/evaluatee')
+        if (evaluateeRes.data.status === 1) {
+            myEvaluateeInfo.value = evaluateeRes.data.data.find(e => e.user_id == currentUser.value?.id)
+        }
+
+        // Fetch only assigned periods for this user
+        let periodRes
+        if (currentUser.value?.id) {
+            periodRes = await api.get(`/period/user/${currentUser.value.id}`)
+        } else {
+            periodRes = await api.get('/period')
+        }
+
+        const [selfEvalRes, indicatorRes, posRes, deptRes] = await Promise.all([
             api.get('/selfEvaluation'),
             api.get('/indicator'),
             api.get('/position'),
             api.get('/department')
         ])
 
-        if (evaluateeRes.data.status === 1) {
-            myEvaluateeInfo.value = evaluateeRes.data.data.find(e => e.user_id == currentUser.value?.id)
-
-            if (!myEvaluateeInfo.value) {
-                console.warn('User ID not found in evaluatees list. User ID:', currentUser.value?.id)
-                console.log('All Evaluatees:', evaluateeRes.data.data)
+        if (periodRes.data.status === 1) {
+            periods.value = periodRes.data.data
+            // Set default to first period
+            if (periods.value.length > 0 && !selectedPeriodId.value) {
+                selectedPeriodId.value = periods.value[0].id
             }
         }
-        if (periodRes.data.status === 1) periods.value = periodRes.data.data
         if (selfEvalRes.data.status === 1) selfEvaluations.value = selfEvalRes.data.data
         if (indicatorRes.data.status === 1) indicators.value = indicatorRes.data.data
         if (posRes.data.status === 1) positions.value = posRes.data.data
@@ -164,6 +182,17 @@ onMounted(() => {
             <!-- Active Period Card -->
             <div v-if="activePeriod"
                 class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-xl shadow-sky-500/20">
+
+                <!-- Period Dropdown at top-right -->
+                <div v-if="periods.length > 0" class="absolute top-4 right-4 z-20">
+                    <select v-model="selectedPeriodId"
+                        class="px-3 py-1.5 rounded-lg bg-white/90 text-zinc-800 text-sm font-medium outline-none border-0 cursor-pointer shadow-lg">
+                        <option v-for="period in periods" :key="period.id" :value="period.id">
+                            {{ period.name }}
+                        </option>
+                    </select>
+                </div>
+
                 <div class="absolute top-10 right-10 p-8 opacity-10">
                     <component :is="lucide.Calendar" class="w-48 h-48 transform translate-x-12 -translate-y-12" />
                 </div>
@@ -251,7 +280,12 @@ onMounted(() => {
                         <component :is="lucide.User" class="w-24 h-24 transform translate-x-4 -translate-y-4" />
                     </div>
                     <div class="relative z-10">
-                        <div
+                        <div v-if="currentUser?.profile_img"
+                            class="w-12 h-12 rounded-xl overflow-hidden mb-4 border border-white/20">
+                            <img :src="`${BASE_URL}${currentUser.profile_img}`" alt="Profile"
+                                class="w-full h-full object-cover">
+                        </div>
+                        <div v-else
                             class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mb-4">
                             <component :is="lucide.User" class="w-6 h-6" />
                         </div>

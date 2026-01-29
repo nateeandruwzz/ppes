@@ -1,66 +1,71 @@
 import CommitteeSummary from "../models/committeeSummaryModel.js";
 
-export const getCommitteeSummaryAll = async (req, res) => {
-  try {
-    const rows = await CommitteeSummary.getAll();
-    if(rows.length > 0){
-        return res.json({status: 1, message: "สำเร็จ", data: rows});
-    }else{
-        return res.json({status: 0, message: "ไม่พบข้อมูล"});
-    }
-  } catch (err) {
-    return res.status(500).json({status: 0, message: "เซิร์ฟเวอร์ผิดพลาด" });
-  }
-};
-
-export const getCommitteeSummaryID = async (req, res) => {
+export const saveSummary = async (req, res) => {
     try {
-        const result = await CommitteeSummary.getByID(req.params.id);
-        if(!result){
-            res.json({status: 0, message: "ไม่พบข้อมูล"});
-        }else {
-            res.json({status: 1, message: "สำเร็จ", data: result});
+        const { period_id, evaluatee_id, committee_user_id, summary, signature_path } = req.body;
+
+        // Validation
+        if (!period_id || !evaluatee_id || !committee_user_id || !signature_path) {
+            return res.status(400).json({ status: 0, message: "ข้อมูลไม่ครบถ้วน" });
         }
-    }catch (err){
-        return res.status(500).json({ status: 0, message: "เซิร์ฟเวอร์ผิดพลาด" });
+
+        // Check if exists
+        const existing = await CommitteeSummary.getByEvaluateeAndPeriod(evaluatee_id, period_id);
+
+        let result;
+        if (existing.length > 0) {
+            // Update
+            result = await CommitteeSummary.update(
+                existing[0].id,
+                period_id,
+                evaluatee_id,
+                committee_user_id,
+                summary || '',
+                signature_path
+            );
+        } else {
+            // Create
+            result = await CommitteeSummary.create(
+                period_id,
+                evaluatee_id,
+                committee_user_id,
+                summary || '',
+                signature_path
+            );
+        }
+
+        if (result) {
+            return res.json({ status: 1, message: "บันทึกข้อมูลสำเร็จ" });
+        } else {
+            return res.status(400).json({ status: 0, message: "บันทึกข้อมูลไม่สำเร็จ" });
+        }
+
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ status: 0, message: "เซิร์ฟเวอร์ผิดพลาด", error: err.message });
     }
 };
 
-export const createCommitteeSummary = async (req, res) => {
+export const getSummary = async (req, res) => {
     try {
-        const { period_id,evaluatee_id,committee_user_id,summary,signature_path } = req.body;
-        const result = await CommitteeSummary.create(period_id,evaluatee_id,committee_user_id,summary,signature_path);
-        if(result.insertId > 0){
-            return res.status(201).json({status: 1, message: "สำเร็จ", data: result });
-        }else{
-            return res.status(400).json({status: 0, message: "ไม่สำเร็จ"});
+        const { periodId, evaluateeId } = req.params;
+        const rows = await CommitteeSummary.getByEvaluateeAndPeriod(evaluateeId, periodId);
+
+        if (rows.length > 0) {
+            return res.json({ status: 1, message: "สำเร็จ", data: rows[0] });
+        } else {
+            return res.json({ status: 0, message: "ไม่พบข้อมูล" });
         }
     } catch (err) {
         return res.status(500).json({ status: 0, message: "เซิร์ฟเวอร์ผิดพลาด" });
     }
 };
 
-export const updateCommitteeSummary = async (req, res) => {
-  try {
-    const { period_id,evaluatee_id,committee_user_id,summary,signature_path } = req.body;
-    const result = await CommitteeSummary.update(req.params.id,period_id,evaluatee_id,committee_user_id,summary,signature_path);
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ status: 0, message: "ไม่พบข้อมูล" });
-    }
-    res.json({ status: 1, message: "สำเร็จ" ,data: result});
-  } catch (err) {
-    res.status(500).json({ status: 0, message: "เซิร์ฟเวอร์ผิดพลาด" });
-  }
-};
-
-export const deleteCommitteeSummary = async (req, res) => {
-    try{
-        const result = await CommitteeSummary.delete(req.params.id);
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ status: 0, message: "ไม่พบข้อมูล" });
-        }
-        res.json({status: 1, message: "สำเร็จ", data: result});
+export const getAllSummaries = async (req, res) => {
+    try {
+        const rows = await CommitteeSummary.getAll();
+        return res.json({ status: 1, message: "สำเร็จ", data: rows });
     } catch (err) {
         return res.status(500).json({ status: 0, message: "เซิร์ฟเวอร์ผิดพลาด" });
     }

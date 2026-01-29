@@ -22,7 +22,7 @@
                             <component :is="lucide.ArrowLeft" class="w-5 h-5 text-zinc-500" />
                         </button>
                         <div>
-                            <h1 class="text-xl font-bold text-zinc-900">ประเมินบุคลากร</h1>
+                            <h1 class="text-xl font-bold text-zinc-900">{{ topicName }}</h1>
                             <p class="text-xs text-zinc-500 mt-1">กรุณาประเมินตามตัวชี้วัดที่กำหนด</p>
                         </div>
                     </div>
@@ -48,9 +48,15 @@
                         </div>
                     </div>
                     <!-- รูปโปรไฟล์ (ขวา) - สี่เหลี่ยม -->
-                    <div
-                        class="w-24 h-24 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600 border-4 border-amber-50 shrink-0">
-                        <component :is="lucide.User" class="w-12 h-12" />
+                    <div>
+                        <div v-if="evaluateeProfileImg"
+                            class="w-24 h-24 rounded-xl overflow-hidden border border-zinc-200">
+                            <img :src="evaluateeProfileImg" alt="Profile" class="w-full h-full object-cover">
+                        </div>
+                        <div v-else
+                            class="w-24 h-24 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-400 border border-zinc-200">
+                            <component :is="lucide.User" class="w-10 h-10" />
+                        </div>
                     </div>
                 </div>
 
@@ -101,13 +107,13 @@
                         class="bg-zinc-50/50 px-6 py-4 border-b border-zinc-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div class="flex items-start gap-3">
                             <div class="bg-sky-500 text-white text-xs font-bold px-2.5 py-1 rounded-md mt-0.5">
-                                ข้อที่ {{ index + 1 }}
+                                ตัวชี้วัด {{ index + 1 }}
                             </div>
                             <h3 class="font-semibold text-zinc-900 text-lg leading-snug">{{ indicator.name }}</h3>
                         </div>
                         <span
-                            class="whitespace-nowrap px-3 py-1 rounded-full border border-zinc-200 bg-white text-zinc-600 text-sm">
-                            น้ำหนัก {{ indicator.weight }}%
+                            class="whitespace-nowrap px-3 py-1 rounded-full border border-zinc-200 bg-white text-zinc-600 text-sm font-semibold">
+                            {{ indicator.weight }} คะแนน
                         </span>
                     </div>
 
@@ -200,7 +206,7 @@
                                             @click="setScore(indicator.id, scale.value)">
                                             <div class="text-lg font-bold mb-1">{{ scale.value }}</div>
                                             <div class="text-[10px] uppercase tracking-wider opacity-80">{{ scale.name
-                                                }}
+                                            }}
                                             </div>
                                         </button>
                                     </div>
@@ -301,7 +307,12 @@
                     class="flex-1 md:flex-none flex items-center justify-center gap-2 h-11 px-6 rounded-xl text-zinc-600 bg-zinc-100 hover:bg-zinc-200 font-medium transition-colors">
                     ยกเลิก
                 </button>
-                <button @click="handleSubmit" :disabled="isSaving"
+                <button v-if="isChairman && !isLocked" @click="handleSummarize"
+                    class="flex-1 md:flex-none flex items-center justify-center gap-2 h-11 px-6 rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 font-bold shadow-md hover:shadow-indigo-500/20 transition-all">
+                    <component :is="lucide.FileSignature" class="w-4 h-4" />
+                    สรุปผลการประเมิน
+                </button>
+                <button v-if="!isChairman" @click="handleSubmit(true)" :disabled="isSaving"
                     class="flex-1 md:flex-none flex items-center justify-center gap-2 h-11 px-6 rounded-xl text-white bg-sky-500 hover:bg-sky-600 font-bold shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                     <component :is="isSaving ? lucide.Loader2 : lucide.Send"
                         :class="['w-4 h-4', isSaving && 'animate-spin']" />
@@ -341,6 +352,7 @@ const selfEvaluations = ref([])
 const users = ref([])
 const departments = ref([])
 const positions = ref([])
+const topics = ref([])
 const isLoading = ref(false)
 const isError = ref(false)
 const isSaving = ref(false)
@@ -364,6 +376,13 @@ const periodName = computed(() => {
     return period.value?.name || 'กำลังโหลด...'
 })
 
+const topicName = computed(() => {
+    if (periodIndicators.value.length === 0 || topics.value.length === 0) return ''
+    const topicId = periodIndicators.value[0].topic_id
+    const topic = topics.value.find(t => t.id === topicId)
+    return topic ? topic.name : ''
+})
+
 const evaluateeName = computed(() => {
     if (!evaluateeInfo.value) return '-'
     const user = users.value.find(u => u.id === evaluateeInfo.value.user_id)
@@ -380,6 +399,15 @@ const evaluateeDepartment = computed(() => {
     if (!evaluateeInfo.value) return '-'
     const department = departments.value.find(d => d.id === evaluateeInfo.value.department_id)
     return department ? department.name : '-'
+})
+
+const evaluateeProfileImg = computed(() => {
+    if (!evaluateeInfo.value) return null
+    const user = users.value.find(u => u.id === evaluateeInfo.value.user_id)
+    if (user && user.profile_img) {
+        return `${BASE_URL}${user.profile_img}`
+    }
+    return null
 })
 
 const maxScale = computed(() => {
@@ -550,6 +578,13 @@ const fetchPositions = async () => {
     }
 }
 
+const fetchTopics = async () => {
+    const response = await api.get('/topic')
+    if (response.data.status === 1) {
+        topics.value = response.data.data
+    }
+}
+
 // State & fetch หลักฐานของผู้ถูกประเมิน
 const evidences = ref([])
 
@@ -567,9 +602,23 @@ const fetchEvidences = async () => {
     }
 }
 
-// ดึงหลักฐานสำหรับตัวชี้วัดนี้
 const getEvidenceForIndicator = (indicatorId) => {
     return evidences.value.find(e => e.indicator_id == indicatorId)
+}
+
+// Committee Summary Link Logic
+const isChairman = computed(() => currentUser.value?.role === 'Head of Committee' || currentUser.value?.role === 'Admin')
+const isLocked = ref(false)
+
+const fetchCommitteeSummary = async () => {
+    try {
+        const response = await api.get(`/committeeSummary/${periodId.value}/${evaluateeId.value}`)
+        if (response.data.status === 1 && response.data.data.signature_path) {
+            isLocked.value = true
+        }
+    } catch (err) {
+        console.error('Error fetching summary:', err)
+    }
 }
 
 // ตรวจสอบว่าเป็นรูปภาพหรือไม่
@@ -586,12 +635,12 @@ const getEvidenceUrl = (filePath) => {
 }
 
 // Submit
-const handleSubmit = async () => {
+const handleSubmit = async (shouldRedirect = true) => {
     // Validation
     const missingScores = periodIndicators.value.filter(ind => getScore(ind.id) === null)
     if (missingScores.length > 0) {
         toast.error(`กรุณาให้คะแนนให้ครบทุกข้อ (ขาด ${missingScores.length} ข้อ)`)
-        return
+        return false
     }
 
     isSaving.value = true
@@ -616,12 +665,25 @@ const handleSubmit = async () => {
 
         toast.success('บันทึกการประเมินเรียบร้อยแล้ว')
         hasUnsavedChanges.value = false
-        router.push('/committee/evaluate')
+        if (shouldRedirect) {
+            router.push('/committee/evaluate')
+        }
+        return true
     } catch (error) {
         console.error('Error saving evaluation:', error)
         toast.error('เกิดข้อผิดพลาดในการบันทึก')
+        return false
     } finally {
         isSaving.value = false
+    }
+}
+
+const handleSummarize = async () => {
+    // บันทึกคะแนนก่อนโดยไม่ต้อง Redirect
+    const success = await handleSubmit(false)
+    if (success) {
+        // ไปหน้า Summary ถ้าบันทึกสำเร็จ
+        router.push(`/committee/summary/${periodId.value}/${evaluateeId.value}`)
     }
 }
 
@@ -640,7 +702,12 @@ const loadData = async () => {
             fetchUsers(),
             fetchDepartments(),
             fetchPositions(),
-            fetchEvidences()
+            fetchEvidences(),
+            fetchEvidences(),
+            fetchEvidences(),
+            fetchTopics(),
+            fetchCommitteeSummary(),
+            fetchUsers()
         ])
         initFormData()
     } catch (error) {

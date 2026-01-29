@@ -49,8 +49,13 @@
                 class="group bg-white rounded-xl border border-zinc-200 p-5 hover:shadow-md transition-all duration-200 flex flex-col">
                 <div class="flex justify-between items-start mb-4">
                     <div class="flex items-center gap-3">
-                        <div
-                            class="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center text-amber-600 border border-amber-100">
+                        <div v-if="getEvaluateeProfileImg(assignment.evaluatee_id)"
+                            class="w-12 h-12 rounded-full overflow-hidden border border-amber-100 shrink-0">
+                            <img :src="getEvaluateeProfileImg(assignment.evaluatee_id)" alt="Profile"
+                                class="w-full h-full object-cover">
+                        </div>
+                        <div v-else
+                            class="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center text-amber-600 border border-amber-100 shrink-0">
                             <component :is="lucide.User" class="w-6 h-6" />
                         </div>
                         <div>
@@ -88,7 +93,7 @@
                         <component :is="lucide.ClipboardCheck" class="w-4 h-4" />
                         {{ getStatusLabel(assignment) === 'ประเมินครบแล้ว' ? 'ดู/แก้ไข' : 'ประเมิน' }}
                     </button>
-                    
+
                     <!-- ปุ่มสรุปผล สำหรับประธานเท่านั้น -->
                     <button v-if="isChairman(assignment) && getStatusLabel(assignment) === 'ประเมินครบแล้ว'"
                         @click="goToSummary(assignment)"
@@ -106,6 +111,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '../../services/axios'
+import { BASE_URL } from '../../config'
 import * as lucide from 'lucide-vue-next'
 import { useAuthStore } from '../../store/authStore'
 
@@ -163,6 +169,14 @@ const getEvaluateeDepartment = (evaluateeId) => {
     if (!evaluatee) return '-'
     const department = departments.value.find(d => d.id === evaluatee.department_id)
     return department ? department.name : '-'
+}
+
+const getEvaluateeProfileImg = (evaluateeId) => {
+    const evaluatee = evaluatees.value.find(e => e.id === evaluateeId)
+    if (!evaluatee) return null
+    const user = users.value.find(u => u.id == evaluatee.user_id)
+    if (user && user.profile_img) return `${BASE_URL}${user.profile_img}`
+    return null
 }
 
 const getIndicatorCount = (periodId) => {

@@ -22,14 +22,10 @@
                             <component :is="lucide.ArrowLeft" class="w-5 h-5 text-zinc-500" />
                         </button>
                         <div>
-                            <h1 class="text-xl font-bold text-zinc-900">ประเมินผลการปฏิบัติงานตนเอง</h1>
+                            <h1 class="text-xl font-bold text-zinc-900">{{ topicName }}</h1>
                             <p class="text-xs text-zinc-500 mt-1">กรุณาประเมินตามตัวชี้วัดที่กำหนด</p>
                         </div>
                     </div>
-                    <span
-                        class="self-start md:self-auto px-3 py-1 rounded-full bg-sky-50 text-sky-700 text-sm font-medium">
-                        {{ periodName }}
-                    </span>
                 </div>
 
                 <!-- ข้อมูลผู้ประเมิน-->
@@ -53,9 +49,9 @@
                         </div>
                     </div>
                     <!-- รูปโปรไฟล์ (ขวา) - สี่เหลี่ยม -->
-                    <div
-                        class="w-24 h-24 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600 border-4 border-amber-50 shrink-0">
-                        <component :is="lucide.User" class="w-12 h-12" />
+                    <div>
+                        <img :src="'http://localhost:4400' + currentUser?.profile_img" alt=""
+                            class="w-24 h-24 bg-cover rounded-2xl">
                     </div>
                 </div>
 
@@ -89,7 +85,7 @@
                         class="bg-zinc-50/50 px-6 py-4 border-b border-zinc-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div class="flex items-start gap-3">
                             <div class="bg-sky-500 text-white text-xs font-bold px-2.5 py-1 rounded-md mt-0.5">
-                                ข้อที่ {{ index + 1 }}
+                                ตัวชี้วัดที่ {{ index + 1 }}
                             </div>
                             <h3 class="font-semibold text-zinc-900 text-lg leading-snug">{{ indicator.name }}</h3>
                         </div>
@@ -105,6 +101,33 @@
                             class="text-zinc-600 mb-6 bg-zinc-50 p-4 rounded-xl text-sm leading-relaxed">
                             {{ indicator.description }}
                         </p>
+
+                        <!-- Admin References (Reference Docs) -->
+                        <div v-if="indicatorRefs[indicator.id] && indicatorRefs[indicator.id].length > 0" class="mb-6">
+                            <h4 class="font-semibold text-sm text-zinc-900 mb-2 flex items-center gap-2">
+                                <component :is="lucide.BookOpen" class="w-4 h-4 text-indigo-500" />
+                                เอกสารประกอบการประเมิน (จากเจ้าหน้าที่)
+                            </h4>
+                            <div class="space-y-2">
+                                <a v-for="ref in indicatorRefs[indicator.id]" :key="ref.id"
+                                    :href="ref.ref_type === 'url' ? ref.ref_path : `${BASE_URL}${ref.ref_path}`"
+                                    target="_blank"
+                                    class="flex items-center gap-3 p-3 rounded-xl border border-indigo-100 bg-indigo-50/50 hover:bg-indigo-50 transition-colors group">
+                                    <div
+                                        class="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-indigo-500 shadow-sm group-hover:scale-110 transition-transform">
+                                        <component :is="ref.ref_type === 'url' ? lucide.Link : lucide.FileText"
+                                            class="w-4 h-4" />
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm font-medium text-indigo-900">{{ ref.ref_name }}</p>
+                                        <p class="text-xs text-indigo-600">{{ ref.ref_type === 'url' ? 'ลิงก์ภายนอก' :
+                                            'เอกสารแนบ' }}</p>
+                                    </div>
+                                    <component :is="lucide.ExternalLink"
+                                        class="w-4 h-4 text-indigo-400 group-hover:text-indigo-600" />
+                                </a>
+                            </div>
+                        </div>
 
                         <div class="space-y-6">
                             <!-- Scale Selection -->
@@ -139,11 +162,13 @@
                                 </div>
                             </div>
 
-                            <!-- Evidence Attachment -->
-                            <div v-if="indicator.required_evidence" class="space-y-4 pt-4 border-t border-zinc-100">
+                            <!-- Evidence Attachment - Show for all indicators -->
+                            <div class="space-y-4 pt-4 border-t border-zinc-100">
                                 <h4 class="font-semibold text-sm text-zinc-900 flex items-center gap-2">
                                     <component :is="lucide.Paperclip" class="w-4 h-4 text-zinc-500" />
-                                    แนบหลักฐาน <span class="text-red-500">*</span>
+                                    แนบหลักฐาน
+                                    <span v-if="indicator.required_evidence" class="text-red-500">*</span>
+                                    <span v-else class="text-xs text-zinc-400 font-normal">(ไม่บังคับ)</span>
                                 </h4>
 
                                 <!-- Evidence Type Toggle -->
@@ -164,44 +189,61 @@
                                     </button>
                                 </div>
 
-                                <!-- File Upload Mode -->
-                                <div v-if="getEvidenceType(indicator.id) === 'file'" class="space-y-2">
-                                    <div v-if="!getEvidenceFile(indicator.id)">
-                                        <label :for="`file-${indicator.id}`"
-                                            class="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-zinc-300 rounded-xl cursor-pointer bg-zinc-50 hover:bg-zinc-100 transition-colors">
-                                            <component :is="lucide.Upload" class="w-6 h-6 text-zinc-400 mb-2" />
-                                            <span class="text-sm text-zinc-500">คลิกเพื่อเลือกไฟล์</span>
-                                            <span class="text-xs text-zinc-400 mt-1">(รูปภาพ, PDF, Word, Excel สูงสุด
-                                                10MB)</span>
-                                        </label>
-                                        <input :id="`file-${indicator.id}`" type="file"
-                                            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
-                                            @change="e => handleFileSelect(indicator.id, e)" class="hidden" />
+                                <!-- File Upload Mode - Multiple Files -->
+                                <div v-if="getEvidenceType(indicator.id) === 'file'" class="space-y-3">
+                                    <!-- Upload area -->
+                                    <label :for="`file-${indicator.id}`"
+                                        class="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-zinc-300 rounded-xl cursor-pointer bg-zinc-50 hover:bg-zinc-100 transition-colors">
+                                        <component :is="lucide.Upload" class="w-5 h-5 text-zinc-400 mb-1" />
+                                        <span class="text-sm text-zinc-500">คลิกเพื่อเลือกไฟล์ (เลือกได้หลายไฟล์)</span>
+                                        <span class="text-xs text-zinc-400 mt-1">รูปภาพ, PDF, Word, Excel</span>
+                                    </label>
+                                    <input :id="`file-${indicator.id}`" type="file" multiple
+                                        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                                        @change="e => handleFileSelect(indicator.id, e)" class="hidden" />
+
+                                    <!-- Existing Files List -->
+                                    <div v-if="getExistingFiles(indicator.id).length > 0" class="space-y-2">
+                                        <p class="text-xs font-medium text-zinc-500">ไฟล์ที่บันทึกแล้ว:</p>
+                                        <div v-for="file in getExistingFiles(indicator.id)" :key="file.id"
+                                            class="p-2.5 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-3">
+                                            <component :is="lucide.FileCheck" class="w-4 h-4 text-blue-600 shrink-0" />
+                                            <div class="flex-1 min-w-0">
+                                                <a :href="getExistingFileUrl(file)" target="_blank"
+                                                    class="text-sm font-medium text-blue-700 hover:underline truncate block">
+                                                    {{ getFileName(file) }}
+                                                </a>
+                                            </div>
+                                            <button type="button" @click="removeExistingFile(indicator.id, file.id)"
+                                                class="p-1 hover:bg-blue-100 rounded transition-colors text-blue-600 hover:text-red-500">
+                                                <component :is="lucide.Trash2" class="w-4 h-4" />
+                                            </button>
+                                        </div>
                                     </div>
 
-                                    <!-- Show uploaded file or existing evidence -->
-                                    <div v-else class="p-3 bg-green-50 border border-green-200 rounded-xl">
-                                        <!-- แสดงตัวอย่างรูปภาพ (ถ้าเป็นรูป) -->
-                                        <div v-if="isImageFile(getEvidenceFile(indicator.id))" class="mb-2">
-                                            <img :src="getImagePreviewUrl(indicator.id)"
-                                                class="max-h-32 rounded-lg object-contain" alt="หลักฐาน" />
-                                        </div>
-                                        <div class="flex items-center gap-3">
-                                            <component :is="lucide.FileCheck" class="w-5 h-5 text-green-600 shrink-0" />
-                                            <div class="flex-1 min-w-0">
-                                                <p class="text-sm font-medium text-green-800 truncate">
-                                                    {{ getEvidenceFileName(indicator.id) }}
-                                                </p>
-                                                <a v-if="getEvidenceFilePath(indicator.id)"
-                                                    :href="getFullFileUrl(indicator.id)" target="_blank"
-                                                    class="text-xs text-sky-600 hover:underline">
-                                                    คลิกเพื่อดูไฟล์
-                                                </a>
-                                                <span v-else class="text-xs text-green-600">อัปโหลดแล้ว</span>
+                                    <!-- New Files List -->
+                                    <div v-if="getEvidenceFiles(indicator.id).length > 0" class="space-y-2">
+                                        <p class="text-xs font-medium text-zinc-500">ไฟล์ใหม่ที่จะอัปโหลด:</p>
+                                        <div v-for="(file, fileIndex) in getEvidenceFiles(indicator.id)"
+                                            :key="fileIndex"
+                                            class="p-2.5 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
+                                            <!-- Image preview -->
+                                            <div v-if="isImageFile(file)"
+                                                class="w-10 h-10 rounded overflow-hidden shrink-0">
+                                                <img :src="getFilePreviewUrl(file)"
+                                                    class="w-full h-full object-cover" />
                                             </div>
-                                            <button type="button" @click="clearEvidence(indicator.id)"
-                                                class="p-1.5 hover:bg-green-100 rounded-lg transition-colors">
-                                                <component :is="lucide.X" class="w-4 h-4 text-green-600" />
+                                            <component v-else :is="lucide.FileText"
+                                                class="w-4 h-4 text-green-600 shrink-0" />
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-sm font-medium text-green-800 truncate">{{ file.name }}
+                                                </p>
+                                                <p class="text-xs text-green-600">{{ (file.size / 1024 /
+                                                    1024).toFixed(2) }} MB</p>
+                                            </div>
+                                            <button type="button" @click="removeNewFile(indicator.id, fileIndex)"
+                                                class="p-1 hover:bg-green-100 rounded transition-colors text-green-600 hover:text-red-500">
+                                                <component :is="lucide.X" class="w-4 h-4" />
                                             </button>
                                         </div>
                                     </div>
@@ -269,7 +311,7 @@
                                     <td colspan="2" class="py-4 px-6 font-bold text-zinc-900 text-right">รวมคะแนนทั้งหมด
                                     </td>
                                     <td class="py-4 px-6 text-center font-bold text-zinc-700">{{ totalWeight.toFixed(2)
-                                        }}</td>
+                                    }}</td>
                                     <td class="py-4 px-6"></td>
                                     <td class="py-4 px-6 text-center">
                                         <span class="text-xl font-bold text-sky-600">{{ totalScore }}</span>
@@ -333,9 +375,13 @@ const periodId = computed(() => route.params.periodId)
 // State
 const myEvaluateeInfo = ref(null)
 const indicators = ref([])
+const indicatorRefs = ref({}) // Store refs by indicator ID
 const scales = ref([])
 const period = ref(null)
 const selfEvaluations = ref([])
+const topics = ref([])
+const positions = ref([])
+const departments = ref([])
 const isLoading = ref(false)
 const isError = ref(false)
 const isSaving = ref(false)
@@ -347,22 +393,34 @@ const formData = reactive({
     evidences: {}
 })
 
-// Evidence Getters/Setters
+// Evidence Getters/Setters - Multiple File Support
 const getEvidenceType = (indicatorId) => {
     return formData.evidences[indicatorId]?.type ?? 'file'
 }
 
 const setEvidenceType = (indicatorId, type) => {
     if (!formData.evidences[indicatorId]) {
-        formData.evidences[indicatorId] = { type: 'file', file: null, filePath: '', url: '', description: '' }
+        formData.evidences[indicatorId] = { type: 'file', files: [], existingFiles: [], url: '', description: '' }
     }
     formData.evidences[indicatorId].type = type
     hasUnsavedChanges.value = true
 }
 
-const getEvidenceFile = (indicatorId) => {
+// Get all files (new + existing) for an indicator
+const getEvidenceFiles = (indicatorId) => {
     const evidence = formData.evidences[indicatorId]
-    return evidence?.file || evidence?.filePath || null
+    if (!evidence) return []
+    return evidence.files || []
+}
+
+const getExistingFiles = (indicatorId) => {
+    const evidence = formData.evidences[indicatorId]
+    if (!evidence) return []
+    return evidence.existingFiles || []
+}
+
+const hasAnyFiles = (indicatorId) => {
+    return getEvidenceFiles(indicatorId).length > 0 || getExistingFiles(indicatorId).length > 0
 }
 
 const getEvidenceUrl = (indicatorId) => {
@@ -371,7 +429,7 @@ const getEvidenceUrl = (indicatorId) => {
 
 const setEvidenceUrl = (indicatorId, url) => {
     if (!formData.evidences[indicatorId]) {
-        formData.evidences[indicatorId] = { type: 'url', file: null, filePath: '', url: '', description: '' }
+        formData.evidences[indicatorId] = { type: 'url', files: [], existingFiles: [], url: '', description: '' }
     }
     formData.evidences[indicatorId].url = url
     hasUnsavedChanges.value = true
@@ -383,31 +441,49 @@ const getEvidenceDescription = (indicatorId) => {
 
 const setEvidenceDescription = (indicatorId, desc) => {
     if (!formData.evidences[indicatorId]) {
-        formData.evidences[indicatorId] = { type: 'file', file: null, filePath: '', url: '', description: '' }
+        formData.evidences[indicatorId] = { type: 'file', files: [], existingFiles: [], url: '', description: '' }
     }
     formData.evidences[indicatorId].description = desc
     hasUnsavedChanges.value = true
 }
 
+// Handle multiple file selection
 const handleFileSelect = (indicatorId, event) => {
-    const file = event.target.files?.[0]
-    if (!file) return
+    const selectedFiles = Array.from(event.target.files || [])
+    if (selectedFiles.length === 0) return
 
     if (!formData.evidences[indicatorId]) {
-        formData.evidences[indicatorId] = { type: 'file', file: null, filePath: '', url: '', description: '' }
+        formData.evidences[indicatorId] = { type: 'file', files: [], existingFiles: [], url: '', description: '' }
     }
-    formData.evidences[indicatorId].file = file
-    formData.evidences[indicatorId].filePath = '' // Clear old path when new file selected
+
+    // Append new files to existing array
+    formData.evidences[indicatorId].files.push(...selectedFiles)
     hasUnsavedChanges.value = true
+
+    // Reset input so same file can be selected again
+    event.target.value = ''
 }
 
-const clearEvidence = (indicatorId) => {
-    if (formData.evidences[indicatorId]) {
-        formData.evidences[indicatorId].file = null
-        formData.evidences[indicatorId].filePath = ''
-        formData.evidences[indicatorId].url = ''
+// Remove a new file from the list
+const removeNewFile = (indicatorId, fileIndex) => {
+    if (formData.evidences[indicatorId]?.files) {
+        formData.evidences[indicatorId].files.splice(fileIndex, 1)
+        hasUnsavedChanges.value = true
     }
-    hasUnsavedChanges.value = true
+}
+
+// Remove an existing file (mark for deletion)
+const removeExistingFile = async (indicatorId, evidenceId) => {
+    try {
+        await api.delete(`/evidence/${evidenceId}`)
+        if (formData.evidences[indicatorId]?.existingFiles) {
+            formData.evidences[indicatorId].existingFiles = formData.evidences[indicatorId].existingFiles.filter(f => f.id !== evidenceId)
+        }
+        toast.success('ลบหลักฐานเรียบร้อย')
+    } catch (err) {
+        console.error('Error deleting evidence:', err)
+        toast.error('ไม่สามารถลบหลักฐานได้')
+    }
 }
 
 // ตรวจสอบว่าเป็นไฟล์รูปภาพหรือไม่
@@ -419,38 +495,29 @@ const isImageFile = (fileOrPath) => {
     return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(ext)
 }
 
-// ดึง URL สำหรับแสดง preview รูปภาพ
-const getImagePreviewUrl = (indicatorId) => {
-    const evidence = formData.evidences[indicatorId]
-    if (!evidence) return ''
-    if (evidence.file) {
-        return URL.createObjectURL(evidence.file)
+// Get preview URL for a file
+const getFilePreviewUrl = (file) => {
+    if (file instanceof File) {
+        return URL.createObjectURL(file)
     }
-    if (evidence.filePath) {
-        return `${BASE_URL}${evidence.filePath}`
+    return null
+}
+
+// Get file name
+const getFileName = (file) => {
+    if (file instanceof File) return file.name
+    if (typeof file === 'object' && file.file_path) {
+        return file.file_path.split('/').pop()
+    }
+    return 'ไฟล์'
+}
+
+// Get file url for existing files
+const getExistingFileUrl = (file) => {
+    if (file && file.file_path) {
+        return `${BASE_URL}${file.file_path}`
     }
     return ''
-}
-
-// ดึงชื่อไฟล์สำหรับแสดง
-const getEvidenceFileName = (indicatorId) => {
-    const evidence = formData.evidences[indicatorId]
-    if (!evidence) return ''
-    if (evidence.file) return evidence.file.name
-    if (evidence.filePath) return evidence.filePath.split('/').pop()
-    return 'ไฟล์ที่อัปโหลด'
-}
-
-// ดึง file path ที่บันทึกแล้ว
-const getEvidenceFilePath = (indicatorId) => {
-    return formData.evidences[indicatorId]?.filePath || ''
-}
-
-// ดึง URL สำหรับเปิดไฟล์
-const getFullFileUrl = (indicatorId) => {
-    const filePath = getEvidenceFilePath(indicatorId)
-    if (!filePath) return ''
-    return `${BASE_URL}${filePath}`
 }
 
 // Computed
@@ -464,6 +531,25 @@ const periodScales = computed(() => {
 
 const periodName = computed(() => {
     return period.value?.name || 'กำลังโหลด...'
+})
+
+const topicName = computed(() => {
+    if (periodIndicators.value.length === 0 || topics.value.length === 0) return ''
+    const topicId = periodIndicators.value[0].topic_id
+    const topic = topics.value.find(t => t.id === topicId)
+    return topic ? topic.name : ''
+})
+
+const userPosition = computed(() => {
+    if (!myEvaluateeInfo.value || positions.value.length === 0) return '-'
+    const pos = positions.value.find(p => p.id === myEvaluateeInfo.value.position_id)
+    return pos ? pos.name : '-'
+})
+
+const userDepartment = computed(() => {
+    if (!myEvaluateeInfo.value || departments.value.length === 0) return '-'
+    const dept = departments.value.find(d => d.id === myEvaluateeInfo.value.department_id)
+    return dept ? dept.name : '-'
 })
 
 const maxScale = computed(() => {
@@ -551,20 +637,17 @@ const initFormData = () => {
             existing_id: existing ? existing.id : null
         }
 
-        // โหลดหลักฐานที่มีอยู่
-        const existingEvidence = existingEvidences.value.find(ev =>
+        // โหลดหลักฐานที่มีอยู่ (หลายไฟล์)
+        const indicatorEvidences = existingEvidences.value.filter(ev =>
             ev.indicator_id == ind.id
         )
 
-        if (existingEvidence) {
-            formData.evidences[ind.id] = {
-                type: existingEvidence.url ? 'url' : 'file',
-                file: null,
-                filePath: existingEvidence.file_path || '',
-                url: existingEvidence.url || '',
-                description: existingEvidence.description || '',
-                existing_id: existingEvidence.id
-            }
+        formData.evidences[ind.id] = {
+            type: 'file',
+            files: [], // New files to upload
+            existingFiles: indicatorEvidences, // Existing files from DB
+            url: indicatorEvidences.find(e => e.url)?.url || '',
+            description: indicatorEvidences[0]?.description || ''
         }
     })
 
@@ -588,6 +671,19 @@ const fetchIndicators = async () => {
     } else {
         indicators.value = []
     }
+    // Fetch References for indicators
+    if (indicators.value.length > 0) {
+        for (const ind of indicators.value) {
+            try {
+                const refRes = await api.get(`/indicator-reference/indicator/${ind.id}`)
+                if (refRes.data.status === 1) {
+                    indicatorRefs.value[ind.id] = refRes.data.data
+                }
+            } catch (e) {
+                console.error('Fetch ref error', e)
+            }
+        }
+    }
 }
 
 const fetchScales = async () => {
@@ -610,6 +706,27 @@ const fetchSelfEvaluations = async () => {
         selfEvaluations.value = response.data.data
     } else {
         selfEvaluations.value = []
+    }
+}
+
+const fetchTopics = async () => {
+    const response = await api.get('/topic')
+    if (response.data.status === 1) {
+        topics.value = response.data.data
+    }
+}
+
+const fetchPositions = async () => {
+    const response = await api.get('/position')
+    if (response.data.status === 1) {
+        positions.value = response.data.data
+    }
+}
+
+const fetchDepartments = async () => {
+    const response = await api.get('/department')
+    if (response.data.status === 1) {
+        departments.value = response.data.data
     }
 }
 
@@ -646,12 +763,12 @@ const handleSubmit = async () => {
         return
     }
 
-    // Validation - Evidence for required indicators
+    // Validation - Evidence for required indicators (must have at least 1 file)
     const missingEvidence = periodIndicators.value.filter(ind => {
         if (!ind.required_evidence) return false
         const evidence = formData.evidences[ind.id]
         if (!evidence) return true
-        if (evidence.type === 'file' && !evidence.file && !evidence.filePath) return true
+        if (evidence.type === 'file' && !hasAnyFiles(ind.id)) return true
         if (evidence.type === 'url' && !evidence.url) return true
         return false
     })
@@ -680,45 +797,56 @@ const handleSubmit = async () => {
             }
         }
 
-        // 2. Upload Files & Save Evidence for required indicators
+        // 2. Upload Files & Save Evidence for ALL indicators that have files
         for (const indicator of periodIndicators.value) {
-            if (!indicator.required_evidence) continue
             const evidence = formData.evidences[indicator.id]
             if (!evidence) continue
 
-            let file_path = evidence.filePath || ''
-            let url = evidence.url || ''
+            // Skip if no files and no URL
+            if (evidence.type === 'file' && !hasAnyFiles(indicator.id)) continue
+            if (evidence.type === 'url' && !evidence.url) continue
 
-            // If there's a new file to upload
-            if (evidence.type === 'file' && evidence.file) {
-                const uploadFormData = new FormData()
-                uploadFormData.append('file', evidence.file)
+            // Handle URL type
+            if (evidence.type === 'url' && evidence.url) {
+                const evidencePayload = {
+                    evaluatee_id: myEvaluateeInfo.value.id,
+                    indicator_id: indicator.id,
+                    file_path: null,
+                    url: evidence.url,
+                    description: evidence.description || ''
+                }
+                await api.post('/evidence', evidencePayload)
+                continue
+            }
 
+            // Handle multiple file upload
+            const newFiles = evidence.files || []
+            for (const file of newFiles) {
                 try {
+                    // Upload file
+                    const uploadFormData = new FormData()
+                    uploadFormData.append('file', file)
+
                     const uploadRes = await api.post('/upload', uploadFormData, {
                         headers: { 'Content-Type': 'multipart/form-data' }
                     })
+
                     if (uploadRes.data.status === 1) {
-                        file_path = uploadRes.data.data.path
+                        // Create evidence record for this file
+                        const evidencePayload = {
+                            evaluatee_id: myEvaluateeInfo.value.id,
+                            indicator_id: indicator.id,
+                            file_path: uploadRes.data.data.path,
+                            url: null,
+                            description: evidence.description || ''
+                        }
+                        await api.post('/evidence', evidencePayload)
                     }
                 } catch (uploadErr) {
                     console.error('Upload error:', uploadErr)
-                    toast.error(`อัปโหลดไฟล์หลักฐานสำหรับ "${indicator.name}" ล้มเหลว`)
-                    continue
+                    toast.error(`อัปโหลดไฟล์ "${file.name}" ล้มเหลว`)
                 }
             }
-
-            // Save Evidence record
-            const evidencePayload = {
-                evaluatee_id: myEvaluateeInfo.value.id,
-                indicator_id: indicator.id,
-                file_path: evidence.type === 'file' ? file_path : null,
-                url: evidence.type === 'url' ? url : null,
-                description: evidence.description || ''
-            }
-
-            // Check if evidence exists (could add update logic here)
-            await api.post('/evidence', evidencePayload)
         }
 
         toast.success('บันทึกการประเมินตนเองเรียบร้อยแล้ว')
@@ -742,7 +870,10 @@ const loadData = async () => {
             fetchIndicators(),
             fetchScales(),
             fetchPeriod(),
-            fetchSelfEvaluations()
+            fetchSelfEvaluations(),
+            fetchTopics(),
+            fetchPositions(),
+            fetchDepartments()
         ])
         // ต้อง fetch หลักฐานหลังจากได้ myEvaluateeInfo แล้ว
         await fetchEvidences()

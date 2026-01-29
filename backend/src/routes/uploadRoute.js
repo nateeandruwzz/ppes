@@ -47,7 +47,7 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 10 * 1024 * 1024 }, // Max 10MB
+    limits: { fileSize: 500 * 1024 * 1024 }, // Max 500MB
     fileFilter: fileFilter,
 });
 
@@ -77,11 +77,37 @@ router.post("/", auth, upload.single("file"), (req, res) => {
     }
 });
 
+// --- Upload Multiple Files ---
+router.post("/multiple", auth, upload.array("files", 20), (req, res) => {
+    try {
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({ status: 0, message: "กรุณาเลือกไฟล์" });
+        }
+
+        const uploadedFiles = req.files.map(file => ({
+            filename: file.filename,
+            originalName: file.originalname,
+            path: `/uploads/${file.filename}`,
+            size: file.size,
+            mimetype: file.mimetype,
+        }));
+
+        return res.status(201).json({
+            status: 1,
+            message: `อัปโหลดสำเร็จ ${uploadedFiles.length} ไฟล์`,
+            data: uploadedFiles,
+        });
+    } catch (err) {
+        console.error("Upload Error:", err);
+        return res.status(500).json({ status: 0, message: "เซิร์ฟเวอร์ผิดพลาด" });
+    }
+});
+
 // --- Error Handler for Multer ---
 router.use((err, req, res, next) => {
     if (err instanceof multer.MulterError) {
         if (err.code === "LIMIT_FILE_SIZE") {
-            return res.status(400).json({ status: 0, message: "ไฟล์มีขนาดใหญ่เกินไป (สูงสุด 10MB)" });
+            return res.status(400).json({ status: 0, message: "ไฟล์มีขนาดใหญ่เกินไป (สูงสุด 500MB)" });
         }
         return res.status(400).json({ status: 0, message: err.message });
     } else if (err) {

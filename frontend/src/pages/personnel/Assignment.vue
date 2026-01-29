@@ -273,13 +273,13 @@ onMounted(() => {
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-2">
                                     <span class="font-medium text-zinc-800">{{ getEvaluateeName(item.evaluatee_id)
-                                        }}</span>
+                                    }}</span>
                                 </div>
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-2">
                                     <span class="font-medium text-zinc-800">{{ getEvaluatorName(item.committee_user_id)
-                                        }}</span>
+                                    }}</span>
                                 </div>
                             </td>
                             <td class="px-6 py-4">
