@@ -453,25 +453,24 @@ onMounted(() => {
                             class="hover:bg-zinc-50/50 transition-colors">
                             <td class="px-6 py-4 text-sm text-zinc-500">{{ index + 1 }}</td>
                             <td class="px-6 py-4">
-                                <div class="font-medium text-zinc-800">{{ item.name }}</div>
+                                <div class="text-zinc-800">{{ item.name }}</div>
                             </td>
                             <td class="px-6 py-4 text-sm text-zinc-600">
-                                <div class="text-sm text-zinc-600 truncate max-w-xs">{{ item.description }}</div>
+                                <div class="text-sm text-zinc-800 truncate max-w-xs">{{ item.description || '-' }}</div>
                             </td>
-                            <td class="px-6 py-4 text-sm text-zinc-600">
-                                <span
-                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-sky-50 text-sky-700">
-                                    {{ getTopicName(item.topic_id) }}
+                            <td class="px-6 py-4 text-sm text-zinc-800">
+                                <span>
+                                    {{ getTopicName(item.topic_id) || '-' }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 text-sm text-zinc-600">{{ getPeriodName(item.period_id) }}</td>
-                            <td class="px-6 py-4 text-sm text-zinc-600 text-center">
+                            <td class="px-6 py-4 text-sm text-zinc-800">{{ getPeriodName(item.period_id) }}</td>
+                            <td class="px-6 py-4 text-sm text-zinc-800 text-center">
                                 <span class="text-emerald-700 font-semibold">{{ item.weight }}</span>
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex flex-col gap-1">
                                     <span v-for="scale in getScalesByPeriod(item.period_id)" :key="scale.id"
-                                        class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-50 text-amber-700 w-fit">
+                                        class="inline-flex items-center px-2 py-0.5 rounded text-sm font-medium bg-zinc-100 w-fit">
                                         {{ scale.name }}={{ scale.value }}
                                     </span>
                                     <span v-if="getScalesByPeriod(item.period_id).length === 0"
@@ -482,10 +481,9 @@ onMounted(() => {
                             </td>
                             <td class="px-6 py-4 text-center">
                                 <button @click="openRefModal(item)"
-                                    class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-50 text-sky-600 text-xs font-medium hover:bg-sky-100 transition-colors"
+                                    class="inline-flex items-center justify-center gap-1.5 p-2 rounded-full bg-blue-500 text-white text-xs font-medium hover:bg-blue-600 transition-colors"
                                     title="จัดการเอกสารแนบ">
                                     <component :is="lucide.Paperclip" class="w-3.5 h-3.5" />
-                                    แนบเอกสาร
                                 </button>
                             </td>
                             <td class="px-6 py-4">
@@ -512,19 +510,6 @@ onMounted(() => {
         <Modal :isOpen="isModalOpen" :title="indicatorMode === 'create' ? 'เพิ่มตัวชี้วัดใหม่' : 'แก้ไขตัวชี้วัด'"
             size="xl" @close="closeModal">
             <form @submit.prevent="handleSubmit" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-zinc-700 mb-1">ชื่อตัวชี้วัด</label>
-                    <input v-model="form.name" type="text" required
-                        class="w-full px-4 py-2 rounded-xl border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all placeholder:text-zinc-300"
-                        placeholder="กรอกชื่อตัวชี้วัด" />
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-zinc-700 mb-1">คำอธิบาย</label>
-                    <textarea v-model="form.description" rows="2"
-                        class="w-full px-4 py-2 rounded-xl border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all placeholder:text-zinc-300"
-                        placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)"></textarea>
-                </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
@@ -544,6 +529,20 @@ onMounted(() => {
                             </option>
                         </select>
                     </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 mb-1">ชื่อตัวชี้วัด</label>
+                    <input v-model="form.name" type="text" required
+                        class="w-full px-4 py-2 rounded-xl border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all placeholder:text-zinc-300"
+                        placeholder="กรอกชื่อตัวชี้วัด" />
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 mb-1">คำอธิบาย</label>
+                    <textarea v-model="form.description" rows="2"
+                        class="w-full px-4 py-2 rounded-xl border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all placeholder:text-zinc-300"
+                        placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)"></textarea>
                 </div>
 
                 <div>

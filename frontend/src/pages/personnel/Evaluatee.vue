@@ -259,13 +259,13 @@ onMounted(() => {
                                     <span class="font-medium text-zinc-800">{{ getUserName(item.user_id) }}</span>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 text-sm text-zinc-600">
+                            <td class="px-6 py-4 text-zinc-600">
                                 <p>{{ getPositionName(item.position_id) || '-' }}</p>
                             </td>
-                            <td class="px-6 py-4 text-sm text-zinc-600">
+                            <td class="px-6 py-4 text-zinc-600">
                                 <p>{{ getDepartmentName(item.department_id) || '-' }}</p>
                             </td>
-                            <td class="px-6 py-4 text-sm text-zinc-600">
+                            <td class="px-6 py-4 text-zinc-600">
                                 <span
                                     class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-sky-50 text-sky-700">
                                     {{ getPeriodName(item.period_id) }}

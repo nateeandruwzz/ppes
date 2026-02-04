@@ -266,7 +266,7 @@ onMounted(() => {
                             <td class="px-6 py-4 text-sm text-zinc-500">{{ index + 1 }}</td>
                             <td class="px-6 py-4">
                                 <span
-                                    class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-sky-50 text-sky-700">
+                                    class="inline-flex items-center px-2.5 py-1 rounded-full font-medium">
                                     {{ getPeriodName(item.period_id) }}
                                 </span>
                             </td>

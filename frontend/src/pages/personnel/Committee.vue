@@ -177,8 +177,8 @@ onMounted(() => {
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 text-sm text-zinc-600">{{ item.email }}</td>
-                            <td class="px-6 py-4 text-sm text-zinc-600">{{ item.phone || '-' }}</td>
+                            <td class="px-6 py-4 text-zinc-600">{{ item.email }}</td>
+                            <td class="px-6 py-4 text-zinc-600">{{ item.phone || '-' }}</td>
                             <td class="px-6 py-4 text-right">
                                 <button @click="openDeleteModal(item.id)"
                                     class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-500 text-white cursor-pointer hover:bg-red-600 transition-colors"
