@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { api } from '../../services/axios'
 import * as lucide from 'lucide-vue-next'
 import { useAuthStore } from '../../store/authStore'
+import EmptyState from '../../components/EmptyState.vue'
 
 const authStore = useAuthStore()
 const currentUser = computed(() => authStore.user)
@@ -150,9 +151,11 @@ onMounted(() => {
                 <div class="bg-white rounded-2xl border border-zinc-200 overflow-hidden">
                     <div class="px-6 py-4 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
                         <h3 class="font-bold text-zinc-800">รอบการประเมินล่าสุด</h3>
-                        <button class="text-xs font-medium text-sky-600 hover:text-sky-700">ดูทั้งหมด</button>
                     </div>
-                    <div class="divide-y divide-zinc-100">
+                    <div v-if="periods.length === 0">
+                        <EmptyState />
+                    </div>
+                    <div v-else class="divide-y divide-zinc-100">
                         <div v-for="period in periods.slice(0, 5)" :key="period.id"
                             class="p-4 flex items-center justify-between hover:bg-zinc-50 transition-colors">
                             <div class="flex items-center gap-3">
@@ -186,7 +189,10 @@ onMounted(() => {
                     <div class="px-6 py-4 border-b border-zinc-100 bg-zinc-50/50">
                         <h3 class="font-bold text-zinc-800">แผนก</h3>
                     </div>
-                    <div class="divide-y divide-zinc-100 max-h-[300px] overflow-y-auto">
+                    <div v-if="departments.length === 0">
+                        <EmptyState />
+                    </div>
+                    <div v-else class="divide-y divide-zinc-100 max-h-[300px] overflow-y-auto">
                         <div v-for="dept in departments" :key="dept.id"
                             class="p-4 flex items-center gap-3 hover:bg-zinc-50 transition-colors">
                             <div class="w-2 h-2 rounded-full bg-zinc-300"></div>

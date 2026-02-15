@@ -3,6 +3,7 @@ import { ref, onMounted, watch } from 'vue'
 import { api } from '../../services/axios'
 import * as lucide from 'lucide-vue-next'
 import Loading from '../../components/Loading.vue'
+import EmptyState from '@/components/EmptyState.vue'
 
 // State
 const isLoading = ref(true)
@@ -94,9 +95,10 @@ onMounted(async () => {
             </div>
         </div>
 
-        <!-- Loading -->
-        <!-- Loading -->
-        <Loading v-if="isLoading" />
+        <!-- Empty State -->
+        <div v-if="reportData.length === 0" class="border border-dashed rounded-3xl bg-zinc-50/50">
+            <EmptyState />
+        </div>
 
         <div v-else class="space-y-6">
             <!-- Organization Stats -->

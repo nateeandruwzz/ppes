@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, reactive } from 'vue'
+import { ref, onMounted, reactive, computed, watch } from 'vue'
 import { api } from '../../services/axios'
 import * as lucide from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
@@ -7,6 +7,11 @@ import { toast } from 'vue-sonner'
 // Components
 import Modal from '../../components/Modal.vue'
 import ConfirmModal from '../../components/ConfirmModal.vue'
+import EmptyState from '@/components/EmptyState.vue'
+import {
+    Pagination, PaginationContent, PaginationEllipsis,
+    PaginationItem, PaginationNext, PaginationPrevious
+} from '@/components/ui/pagination'
 
 // State
 const committees = ref([])
@@ -14,6 +19,31 @@ const isLoading = ref(false)
 const isModalOpen = ref(false)
 const isDeleteModalOpen = ref(false)
 const deleteId = ref(null)
+
+// Search & Pagination
+const searchQuery = ref('')
+const currentPage = ref(1)
+const itemsPerPage = 10
+
+const filteredCommittees = computed(() => {
+    if (!searchQuery.value.trim()) return committees.value
+    const q = searchQuery.value.trim().toLowerCase()
+    return committees.value.filter(c =>
+        c.first_name?.toLowerCase().includes(q) ||
+        c.last_name?.toLowerCase().includes(q) ||
+        c.email?.toLowerCase().includes(q) ||
+        `${c.prefix || ''} ${c.first_name || ''} ${c.last_name || ''}`.toLowerCase().includes(q)
+    )
+})
+
+const totalItems = computed(() => filteredCommittees.value.length)
+
+const paginatedCommittees = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage
+    return filteredCommittees.value.slice(start, start + itemsPerPage)
+})
+
+watch(searchQuery, () => { currentPage.value = 1 })
 
 // คำนำหน้าชื่อ
 const prefixOptions = ['นาย', 'นาง', 'นางสาว']
@@ -128,13 +158,22 @@ onMounted(() => {
         <div class="flex items-center justify-between">
             <div>
                 <h2 class="text-2xl font-bold text-zinc-800">จัดการคณะกรรมการ</h2>
-                <p class="text-zinc-500 text-sm">แสดงรายชื่อผู้ใช้ที่เป็นกรรมการประเมิน (Evaluator)</p>
+                <p class="text-zinc-500 text-sm">แสดงรายชื่อผู้ใช้ที่เป็นกรรมการประเมิน</p>
             </div>
             <button @click="openModal"
                 class="flex items-center gap-2 bg-sky-500 hover:bg-sky-600 text-white font-semibold px-4 py-2.5 rounded-full transition-all duration-200 shadow-md hover:shadow-lg active:scale-95">
                 <component :is="lucide.UserPlus" class="w-5 h-5" />
                 เพิ่มกรรมการ
             </button>
+        </div>
+
+        <!-- Search -->
+        <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <component :is="lucide.Search" class="w-4.5 h-4.5 text-zinc-400" />
+            </div>
+            <input v-model="searchQuery" type="text" placeholder="ค้นหากรรมการ..."
+                class="w-full pl-11 pr-4 py-2.5 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all placeholder:text-zinc-400 text-sm" />
         </div>
 
         <!-- Table Card -->
@@ -162,13 +201,16 @@ onMounted(() => {
                             <td colspan="5" class="px-6 py-8 text-center text-zinc-400">กำลังโหลดข้อมูล...</td>
                         </tr>
                         <!-- Empty State -->
-                        <tr v-else-if="committees.length === 0">
-                            <td colspan="5" class="px-6 py-8 text-center text-zinc-400">ยังไม่มีกรรมการ</td>
+                        <tr v-else-if="filteredCommittees.length === 0">
+                            <td colspan="5">
+                                <EmptyState />
+                            </td>
                         </tr>
                         <!-- Data Rows -->
-                        <tr v-else v-for="(item, index) in committees" :key="item.id"
+                        <tr v-else v-for="(item, index) in paginatedCommittees" :key="item.id"
                             class="hover:bg-zinc-50/50 transition-colors">
-                            <td class="px-6 py-4 text-sm text-zinc-500">{{ index + 1 }}</td>
+                            <td class="px-6 py-4 text-sm text-zinc-500">{{ (currentPage - 1) * itemsPerPage + index + 1
+                            }}</td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
                                     <div>
@@ -189,6 +231,26 @@ onMounted(() => {
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="px-6 py-4 border-t border-zinc-200 bg-zinc-50 flex items-center justify-between">
+                <p class="text-sm text-zinc-500">แสดง {{ (currentPage - 1) * itemsPerPage + 1 }}-{{ Math.min(currentPage
+                    * itemsPerPage, totalItems) }} จาก {{ totalItems }} รายการ</p>
+                <Pagination class="mx-0! w-fit!" v-model:page="currentPage" :items-per-page="itemsPerPage"
+                    :total="totalItems" :sibling-count="1" show-edges>
+                    <PaginationContent v-slot="{ items }">
+                        <PaginationPrevious />
+                        <template v-for="(item, i) in items" :key="i">
+                            <PaginationItem v-if="item.type === 'page'" :value="item.value"
+                                :is-active="item.value === currentPage">
+                                {{ item.value }}
+                            </PaginationItem>
+                            <PaginationEllipsis v-else />
+                        </template>
+                        <PaginationNext />
+                    </PaginationContent>
+                </Pagination>
             </div>
         </div>
 

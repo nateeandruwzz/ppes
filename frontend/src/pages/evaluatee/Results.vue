@@ -246,14 +246,16 @@ onMounted(() => {
         </div>
 
         <!-- Loading -->
-        <!-- Loading -->
         <Loading v-if="isLoading" />
 
         <!-- ไม่พบข้อมูล -->
-        <div v-else-if="!myEvaluateeInfo" class="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-center">
-            <component :is="lucide.AlertCircle" class="w-12 h-12 text-amber-500 mx-auto mb-3" />
-            <h3 class="text-lg font-semibold text-amber-800 mb-1">ยังไม่มีข้อมูลผู้ถูกประเมิน</h3>
-            <p class="text-amber-600 text-sm">กรุณาติดต่อ HR เพื่อเพิ่มคุณเข้าสู่รายชื่อผู้ถูกประเมิน</p>
+        <div v-else-if="!myEvaluateeInfo"
+            class="flex flex-col items-center justify-center py-16 bg-zinc-50/50 rounded-3xl border border-dashed border-zinc-300">
+            <div class="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mb-4">
+                <component :is="lucide.AlertCircle" class="w-8 h-8 text-zinc-400" />
+            </div>
+            <h3 class="font-semibold text-zinc-700 text-xl mb-2">ยังไม่มีผลการประเมิน</h3>
+            <p class="text-sm text-zinc-500">ยังไม่มีผลการประเมิน กรุณาประเมินให้เรียบร้อยก่อน</p>
         </div>
 
         <!-- ผลการประเมิน -->

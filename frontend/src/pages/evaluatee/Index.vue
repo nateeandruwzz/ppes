@@ -230,8 +230,8 @@ onMounted(() => {
             </div>
 
             <!-- No Active Period -->
-            <div v-else class="bg-zinc-50 rounded-3xl p-10 text-center border-2 border-dashed border-zinc-200">
-                <component :is="lucide.CalendarOff" class="w-16 h-16 text-zinc-300 mx-auto mb-4" />
+            <div v-else class="bg-zinc-50/50 rounded-3xl p-10 text-center border border-dashed border-zinc-200">
+                <component :is="lucide.CalendarOff" class="w-12 h-12 text-zinc-300 mx-auto mb-4" />
                 <h3 class="text-xl font-bold text-zinc-700">ไม่มีรอบการประเมินในขณะนี้</h3>
                 <p class="text-zinc-500 mt-2">คุณสามารถตรวจสอบผลการประเมินย้อนหลังได้ที่เมนูผลการประเมิน</p>
             </div>

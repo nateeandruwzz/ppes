@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, reactive, computed } from 'vue'
+import { ref, onMounted, reactive, computed, watch } from 'vue'
 import { api } from '../../services/axios'
 import * as lucide from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
@@ -7,6 +7,11 @@ import { toast } from 'vue-sonner'
 // Components
 import Modal from '../../components/Modal.vue'
 import ConfirmModal from '../../components/ConfirmModal.vue'
+import EmptyState from '@/components/EmptyState.vue'
+import {
+    Pagination, PaginationContent, PaginationEllipsis,
+    PaginationItem, PaginationNext, PaginationPrevious
+} from '@/components/ui/pagination'
 
 // State
 const evaluatees = ref([])
@@ -33,10 +38,36 @@ const form = reactive({
 })
 
 // กรองตามรอบการประเมิน
-const filteredEvaluatees = computed(() => {
+const filteredByPeriod = computed(() => {
     if (!selectedPeriodFilter.value) return evaluatees.value
     return evaluatees.value.filter(e => e.period_id == selectedPeriodFilter.value)
 })
+
+// Search & Pagination
+const searchQuery = ref('')
+const currentPage = ref(1)
+const itemsPerPage = 10
+
+const filteredEvaluatees = computed(() => {
+    if (!searchQuery.value.trim()) return filteredByPeriod.value
+    const q = searchQuery.value.trim().toLowerCase()
+    return filteredByPeriod.value.filter(e => {
+        const userName = getUserName(e.user_id).toLowerCase()
+        const posName = getPositionName(e.position_id).toLowerCase()
+        const deptName = getDepartmentName(e.department_id).toLowerCase()
+        return userName.includes(q) || posName.includes(q) || deptName.includes(q)
+    })
+})
+
+const totalItems = computed(() => filteredEvaluatees.value.length)
+
+const paginatedEvaluatees = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage
+    return filteredEvaluatees.value.slice(start, start + itemsPerPage)
+})
+
+watch(searchQuery, () => { currentPage.value = 1 })
+watch(selectedPeriodFilter, () => { currentPage.value = 1 })
 
 // ดึงข้อมูลผู้ถูกประเมินทั้งหมด
 const fetchEvaluatees = async () => {
@@ -224,6 +255,15 @@ onMounted(() => {
             </button>
         </div>
 
+        <!-- Search -->
+        <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <component :is="lucide.Search" class="w-4.5 h-4.5 text-zinc-400" />
+            </div>
+            <input v-model="searchQuery" type="text" placeholder="ค้นหาผู้ถูกประเมิน..."
+                class="w-full pl-11 pr-4 py-2.5 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all placeholder:text-zinc-400 text-sm" />
+        </div>
+
         <!-- Table Card -->
         <div class="bg-white rounded-2xl border border-zinc-200 overflow-hidden">
             <div class="overflow-x-auto">
@@ -249,11 +289,14 @@ onMounted(() => {
                             <td colspan="6" class="px-6 py-8 text-center text-zinc-400">กำลังโหลดข้อมูล...</td>
                         </tr>
                         <tr v-else-if="filteredEvaluatees.length === 0">
-                            <td colspan="6" class="px-6 py-8 text-center text-zinc-400">ไม่พบข้อมูล</td>
+                            <td colspan="6">
+                                <EmptyState />
+                            </td>
                         </tr>
-                        <tr v-else v-for="(item, index) in filteredEvaluatees" :key="item.id"
+                        <tr v-else v-for="(item, index) in paginatedEvaluatees" :key="item.id"
                             class="hover:bg-zinc-50/50 transition-colors">
-                            <td class="px-6 py-4 text-sm text-zinc-500">{{ index + 1 }}</td>
+                            <td class="px-6 py-4 text-sm text-zinc-500">{{ (currentPage - 1) * itemsPerPage + index + 1
+                            }}</td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
                                     <span class="font-medium text-zinc-800">{{ getUserName(item.user_id) }}</span>
@@ -286,6 +329,26 @@ onMounted(() => {
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="px-6 py-4 border-t border-zinc-200 bg-zinc-50 flex items-center justify-between">
+                <p class="text-sm text-zinc-500">แสดง {{ (currentPage - 1) * itemsPerPage + 1 }}-{{ Math.min(currentPage
+                    * itemsPerPage, totalItems) }} จาก {{ totalItems }} รายการ</p>
+                <Pagination class="mx-0! w-fit!" v-model:page="currentPage" :items-per-page="itemsPerPage"
+                    :total="totalItems" :sibling-count="1" show-edges>
+                    <PaginationContent v-slot="{ items }">
+                        <PaginationPrevious />
+                        <template v-for="(item, i) in items" :key="i">
+                            <PaginationItem v-if="item.type === 'page'" :value="item.value"
+                                :is-active="item.value === currentPage">
+                                {{ item.value }}
+                            </PaginationItem>
+                            <PaginationEllipsis v-else />
+                        </template>
+                        <PaginationNext />
+                    </PaginationContent>
+                </Pagination>
             </div>
         </div>
 

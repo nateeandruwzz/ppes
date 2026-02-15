@@ -60,7 +60,17 @@ const getProfilePictureUrl = () => {
     return null
 }
 
+const roleName = (role) => {
+    switch (role) {
+        case 'Personnel': return 'บุคลากร (แอดมิน)'
+        case 'Evaluator': return 'ผู้ประเมิน'
+        case 'Evaluatees': return 'ผู้รับการประเมิน'
+        default: return 'ผู้ใช้งาน'
+    }
+}
+
 // Close dropdown when clicking outside
+import { onMounted, onUnmounted } from 'vue'
 const handleClickOutside = (e) => {
     const dropdown = document.getElementById('user-dropdown')
     const trigger = document.getElementById('user-dropdown-trigger')
@@ -68,9 +78,6 @@ const handleClickOutside = (e) => {
         closeDropdown()
     }
 }
-
-// Add/remove event listener
-import { onMounted, onUnmounted } from 'vue'
 onMounted(() => {
     document.addEventListener('click', handleClickOutside)
 })
@@ -83,43 +90,67 @@ onUnmounted(() => {
     <div class="relative">
         <!-- Trigger Button -->
         <button id="user-dropdown-trigger" @click="toggleDropdown"
-            class="w-full p-2 rounded-full hover:bg-zinc-100 cursor-pointer transition-all duration-300 ease-in-out">
-            <div class="flex items-center gap-2">
+            class="w-full rounded-xl hover:bg-zinc-100 cursor-pointer transition-all duration-200 ease-in-out"
+            :class="isOpen ? 'p-2.5' : 'p-2'">
+            <div class="flex items-center gap-3">
                 <!-- Avatar -->
-                <div
-                    class="w-10 h-10 rounded-full bg-sky-100 flex items-center justify-center text-sm font-bold text-sky-600 flex-shrink-0 overflow-hidden border border-sky-100">
+                <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0 overflow-hidden ring-2 ring-white shadow-sm"
+                    :class="getProfilePictureUrl() ? '' : 'bg-gradient-to-br from-sky-400 to-sky-600 text-white'">
                     <img v-if="getProfilePictureUrl()" :src="getProfilePictureUrl()" alt="Profile"
                         class="w-full h-full object-cover" />
-                    <span v-else>{{ getUserInitials() }}</span>
+                    <span v-else class="text-xs">{{ getUserInitials() }}</span>
                 </div>
-                <div v-if="isOpen" class="flex flex-col w-full text-left min-w-0">
-                    <span class="text-sm font-medium text-zinc-800 truncate">{{ user?.first_name }} {{ user?.last_name
-                        }}</span>
-                    <span class="text-xs text-gray-500 truncate">{{ user?.email }}</span>
+                <div v-if="isOpen" class="flex-1 min-w-0 text-left">
+                    <p class="text-sm font-semibold text-zinc-800 truncate leading-tight">{{ user?.first_name }} {{
+                        user?.last_name }}</p>
+                    <p class="text-[11px] text-zinc-400 truncate leading-tight mt-0.5">{{ roleName(user?.role) }}</p>
                 </div>
+                <component v-if="isOpen" :is="lucide.ChevronsUpDown" class="w-4 h-4 text-zinc-400 shrink-0" />
             </div>
         </button>
 
         <!-- Dropdown Menu -->
         <Transition name="dropdown">
             <div v-if="isDropdownOpen" id="user-dropdown"
-                class="absolute left-full bottom-0 ml-3 w-48 bg-white rounded-xl shadow-lg border border-zinc-200 overflow-hidden z-50">
-                <!-- Header -->
-                <div class="px-4 py-3 border-b border-zinc-100 bg-zinc-50/50">
-                    <p class="text-sm font-semibold text-zinc-800">โปรไฟล์ของฉัน</p>
+                class="absolute left-full bottom-0 ml-2 w-56 bg-white rounded-xl shadow-xl border border-zinc-200/80 overflow-hidden z-50">
+                <!-- User Header -->
+                <div class="px-4 py-3.5 bg-gradient-to-br from-zinc-50 to-zinc-100/80 border-b border-zinc-100">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0 overflow-hidden ring-2 ring-white shadow-sm"
+                            :class="getProfilePictureUrl() ? '' : 'bg-gradient-to-br from-sky-400 to-sky-600 text-white'">
+                            <img v-if="getProfilePictureUrl()" :src="getProfilePictureUrl()" alt="Profile"
+                                class="w-full h-full object-cover" />
+                            <span v-else>{{ getUserInitials() }}</span>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-zinc-800 truncate">{{ user?.first_name }} {{
+                                user?.last_name }}</p>
+                            <p class="text-xs text-zinc-500 truncate">{{ user?.email }}</p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Menu Items -->
-                <div class="py-1">
+                <div class="p-1.5">
                     <button @click="openProfileDialog"
-                        class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50 transition-colors text-left">
-                        <component :is="lucide.User" class="w-4 h-4 text-zinc-500" />
-                        ข้อมูลส่วนตัว
+                        class="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50 rounded-lg transition-colors text-left group">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-sky-50 flex items-center justify-center group-hover:bg-sky-100 transition-colors">
+                            <component :is="lucide.UserPen" class="w-4 h-4 text-sky-600" />
+                        </div>
+                        <div>
+                            <p class="font-medium text-zinc-700">ข้อมูลส่วนตัว</p>
+                            <p class="text-[11px] text-zinc-400">แก้ไขโปรไฟล์และรหัสผ่าน</p>
+                        </div>
                     </button>
+                    <div class="mx-2 my-1 border-t border-zinc-100"></div>
                     <button @click="handleLogout"
-                        class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors text-left">
-                        <component :is="lucide.LogOut" class="w-4 h-4" />
-                        ออกจากระบบ
+                        class="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors text-left group">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center group-hover:bg-red-100 transition-colors">
+                            <component :is="lucide.LogOut" class="w-4 h-4 text-red-500" />
+                        </div>
+                        <p class="font-medium">ออกจากระบบ</p>
                     </button>
                 </div>
             </div>
@@ -133,12 +164,12 @@ onUnmounted(() => {
 <style scoped>
 .dropdown-enter-active,
 .dropdown-leave-active {
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .dropdown-enter-from,
 .dropdown-leave-to {
     opacity: 0;
-    transform: translateX(-8px);
+    transform: translateX(-6px) scale(0.98);
 }
 </style>

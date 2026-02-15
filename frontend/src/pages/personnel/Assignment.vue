@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, reactive, computed } from 'vue'
+import { ref, onMounted, reactive, computed, watch } from 'vue'
 import { api } from '../../services/axios'
 import * as lucide from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
@@ -7,6 +7,11 @@ import { toast } from 'vue-sonner'
 // Components
 import Modal from '../../components/Modal.vue'
 import ConfirmModal from '../../components/ConfirmModal.vue'
+import EmptyState from '@/components/EmptyState.vue'
+import {
+    Pagination, PaginationContent, PaginationEllipsis,
+    PaginationItem, PaginationNext, PaginationPrevious
+} from '@/components/ui/pagination'
 
 // State
 const assignments = ref([])
@@ -38,10 +43,36 @@ const roleOptions = [
 ]
 
 // กรองตามรอบการประเมิน
-const filteredAssignments = computed(() => {
+const filteredByPeriod = computed(() => {
     if (!selectedPeriodFilter.value) return assignments.value
     return assignments.value.filter(a => a.period_id == selectedPeriodFilter.value)
 })
+
+// Search & Pagination
+const searchQuery = ref('')
+const currentPage = ref(1)
+const itemsPerPage = 10
+
+const filteredAssignments = computed(() => {
+    if (!searchQuery.value.trim()) return filteredByPeriod.value
+    const q = searchQuery.value.trim().toLowerCase()
+    return filteredByPeriod.value.filter(a => {
+        const evaluateeName = getEvaluateeName(a.evaluatee_id).toLowerCase()
+        const evaluatorName = getEvaluatorName(a.committee_user_id).toLowerCase()
+        const periodName = getPeriodName(a.period_id).toLowerCase()
+        return evaluateeName.includes(q) || evaluatorName.includes(q) || periodName.includes(q)
+    })
+})
+
+const totalItems = computed(() => filteredAssignments.value.length)
+
+const paginatedAssignments = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage
+    return filteredAssignments.value.slice(start, start + itemsPerPage)
+})
+
+watch(searchQuery, () => { currentPage.value = 1 })
+watch(selectedPeriodFilter, () => { currentPage.value = 1 })
 
 // ดึงข้อมูลการมอบหมายทั้งหมด
 const fetchAssignments = async () => {
@@ -233,6 +264,15 @@ onMounted(() => {
             </button>
         </div>
 
+        <!-- Search -->
+        <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <component :is="lucide.Search" class="w-4.5 h-4.5 text-zinc-400" />
+            </div>
+            <input v-model="searchQuery" type="text" placeholder="ค้นหาการมอบหมาย..."
+                class="w-full pl-11 pr-4 py-2.5 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all placeholder:text-zinc-400 text-sm" />
+        </div>
+
         <!-- Table Card -->
         <div class="bg-white rounded-2xl border border-zinc-200 overflow-hidden">
             <div class="overflow-x-auto">
@@ -259,27 +299,29 @@ onMounted(() => {
                             <td colspan="6" class="px-6 py-8 text-center text-zinc-400">กำลังโหลดข้อมูล...</td>
                         </tr>
                         <tr v-else-if="filteredAssignments.length === 0">
-                            <td colspan="6" class="px-6 py-8 text-center text-zinc-400">ไม่พบข้อมูล</td>
+                            <td colspan="6">
+                                <EmptyState />
+                            </td>
                         </tr>
-                        <tr v-else v-for="(item, index) in filteredAssignments" :key="item.id"
+                        <tr v-else v-for="(item, index) in paginatedAssignments" :key="item.id"
                             class="hover:bg-zinc-50/50 transition-colors">
-                            <td class="px-6 py-4 text-sm text-zinc-500">{{ index + 1 }}</td>
+                            <td class="px-6 py-4 text-sm text-zinc-500">{{ (currentPage - 1) * itemsPerPage + index + 1
+                                }}</td>
                             <td class="px-6 py-4">
-                                <span
-                                    class="inline-flex items-center px-2.5 py-1 rounded-full font-medium">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full font-medium">
                                     {{ getPeriodName(item.period_id) }}
                                 </span>
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-2">
                                     <span class="font-medium text-zinc-800">{{ getEvaluateeName(item.evaluatee_id)
-                                    }}</span>
+                                        }}</span>
                                 </div>
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-2">
                                     <span class="font-medium text-zinc-800">{{ getEvaluatorName(item.committee_user_id)
-                                    }}</span>
+                                        }}</span>
                                 </div>
                             </td>
                             <td class="px-6 py-4">
@@ -308,6 +350,26 @@ onMounted(() => {
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="px-6 py-4 border-t border-zinc-200 bg-zinc-50 flex items-center justify-between">
+                <p class="text-sm text-zinc-500">แสดง {{ (currentPage - 1) * itemsPerPage + 1 }}-{{ Math.min(currentPage
+                    * itemsPerPage, totalItems) }} จาก {{ totalItems }} รายการ</p>
+                <Pagination class="mx-0! w-fit!" v-model:page="currentPage" :items-per-page="itemsPerPage"
+                    :total="totalItems" :sibling-count="1" show-edges>
+                    <PaginationContent v-slot="{ items }">
+                        <PaginationPrevious />
+                        <template v-for="(item, i) in items" :key="i">
+                            <PaginationItem v-if="item.type === 'page'" :value="item.value"
+                                :is-active="item.value === currentPage">
+                                {{ item.value }}
+                            </PaginationItem>
+                            <PaginationEllipsis v-else />
+                        </template>
+                        <PaginationNext />
+                    </PaginationContent>
+                </Pagination>
             </div>
         </div>
 

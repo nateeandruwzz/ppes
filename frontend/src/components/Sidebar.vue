@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import * as lucide from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
-import UserProfile from './Profiles/UserProfile.vue';
+import UserProfile from './Profiles/UserProfile.vue'
 
 const route = useRoute();
 const isOpen = ref(true);
@@ -43,7 +43,7 @@ const isActive = (link) => {
                             class="flex items-center gap-2 px-3.5 py-2 rounded-full transition-all duration-30 ease-in-out"
                             :class="isActive(items.link) ? 'bg-sky-500 text-white' : 'hover:bg-zinc-100'">
                             <component :is="lucide[items.icon]" class="w-5 h-5" />
-                            <span v-if="isOpen">{{ items.title }}</span>
+                            <span v-if="isOpen" class="font-medium">{{ items.title }}</span>
                         </RouterLink>
                     </li>
                 </ul>

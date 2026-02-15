@@ -29,21 +29,21 @@
 
         <!-- Empty State - No Evaluatee Info -->
         <div v-else-if="!myEvaluateeInfo"
-            class="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-dashed border-zinc-300">
+            class="flex flex-col items-center justify-center py-16 bg-zinc-50/50 rounded-3xl border border-dashed border-zinc-300">
             <div class="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mb-4">
                 <component :is="lucide.AlertCircle" class="w-8 h-8 text-zinc-400" />
             </div>
-            <h3 class="font-medium text-zinc-900">ยังไม่มีข้อมูลผู้ถูกประเมิน</h3>
-            <p class="text-sm text-zinc-500">กรุณาติดต่อ HR เพื่อเพิ่มคุณเข้าสู่รายชื่อผู้ถูกประเมิน</p>
+            <h3 class="font-semibold text-zinc-700 text-xl mb-2">ยังไม่มีข้อมูลผู้ถูกประเมิน</h3>
+            <p class="text-sm text-zinc-500">กรุณาติดต่อเจ้าหน้าที่งานบุคลากร เพื่อเพิ่มคุณเข้าสู่รายชื่อผู้ถูกประเมิน</p>
         </div>
 
         <!-- Empty State - No Periods -->
         <div v-else-if="periods.length === 0"
-            class="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-dashed border-zinc-300">
+            class="flex flex-col items-center justify-center py-16 bg-zinc-50/50 rounded-3xl border border-dashed border-zinc-300">
             <div class="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mb-4">
-                <component :is="lucide.Calendar" class="w-8 h-8 text-zinc-400" />
+                <component :is="lucide.Calendar" class="w-12 h-12 text-zinc-400" />
             </div>
-            <h3 class="font-medium text-zinc-900">ไม่มีรอบการประเมิน</h3>
+            <h3 class="font-semibold text-zinc-700 text-xl mb-2">ไม่มีรอบการประเมิน</h3>
             <p class="text-sm text-zinc-500">ยังไม่มีรอบการประเมินในขณะนี้</p>
         </div>
 

@@ -27,6 +27,7 @@ const props = defineProps({
   collisionBoundary: { type: null, required: false },
   collisionPadding: { type: [Number, Object], required: false },
   arrowPadding: { type: Number, required: false },
+  hideShiftedArrow: { type: Boolean, required: false },
   sticky: { type: String, required: false },
   hideWhenDetached: { type: Boolean, required: false },
   positionStrategy: { type: String, required: false },

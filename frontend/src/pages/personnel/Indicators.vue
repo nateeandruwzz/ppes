@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, reactive, computed } from 'vue'
+import { ref, onMounted, reactive, computed, watch } from 'vue'
 import { api } from '../../services/axios'
 import * as lucide from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
@@ -8,6 +8,11 @@ import { BASE_URL } from '../../config'
 // Components
 import Modal from '../../components/Modal.vue'
 import ConfirmModal from '../../components/ConfirmModal.vue'
+import EmptyState from '@/components/EmptyState.vue'
+import {
+    Pagination, PaginationContent, PaginationEllipsis,
+    PaginationItem, PaginationNext, PaginationPrevious
+} from '@/components/ui/pagination'
 
 // State
 const indicators = ref([])
@@ -22,6 +27,31 @@ const indicatorMode = ref('create')
 const scaleMode = ref('create')
 const deleteId = ref(null)
 const deleteType = ref('indicator')
+
+// Search & Pagination
+const searchQuery = ref('')
+const currentPage = ref(1)
+const itemsPerPage = 10
+
+const filteredIndicators = computed(() => {
+    if (!searchQuery.value.trim()) return indicators.value
+    const q = searchQuery.value.trim().toLowerCase()
+    return indicators.value.filter(item =>
+        item.name?.toLowerCase().includes(q) ||
+        item.description?.toLowerCase().includes(q) ||
+        getTopicName(item.topic_id).toLowerCase().includes(q) ||
+        getPeriodName(item.period_id).toLowerCase().includes(q)
+    )
+})
+
+const totalItems = computed(() => filteredIndicators.value.length)
+
+const paginatedIndicators = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage
+    return filteredIndicators.value.slice(start, start + itemsPerPage)
+})
+
+watch(searchQuery, () => { currentPage.value = 1 })
 
 // Reference State
 const isRefModalOpen = ref(false)
@@ -413,6 +443,15 @@ onMounted(() => {
             </button>
         </div>
 
+        <!-- Search -->
+        <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <component :is="lucide.Search" class="w-4.5 h-4.5 text-zinc-400" />
+            </div>
+            <input v-model="searchQuery" type="text" placeholder="ค้นหาตัวชี้วัด..."
+                class="w-full pl-11 pr-4 py-2.5 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all placeholder:text-zinc-400 text-sm" />
+        </div>
+
         <!-- Table Card -->
         <div class="bg-white rounded-2xl border border-zinc-200 overflow-hidden">
             <div class="overflow-x-auto">
@@ -446,12 +485,15 @@ onMounted(() => {
                         <tr v-if="isLoading">
                             <td colspan="9" class="px-6 py-8 text-center text-zinc-400">กำลังโหลดข้อมูล...</td>
                         </tr>
-                        <tr v-else-if="indicators.length === 0">
-                            <td colspan="9" class="px-6 py-8 text-center text-zinc-400">ไม่พบข้อมูล</td>
+                        <tr v-else-if="filteredIndicators.length === 0">
+                            <td colspan="9">
+                                <EmptyState />
+                            </td>
                         </tr>
-                        <tr v-else v-for="(item, index) in indicators" :key="item.id"
+                        <tr v-else v-for="(item, index) in paginatedIndicators" :key="item.id"
                             class="hover:bg-zinc-50/50 transition-colors">
-                            <td class="px-6 py-4 text-sm text-zinc-500">{{ index + 1 }}</td>
+                            <td class="px-6 py-4 text-sm text-zinc-500">{{ (currentPage - 1) * itemsPerPage + index + 1
+                            }}</td>
                             <td class="px-6 py-4">
                                 <div class="text-zinc-800">{{ item.name }}</div>
                             </td>
@@ -503,6 +545,26 @@ onMounted(() => {
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="px-6 py-4 border-t border-zinc-200 bg-zinc-50 flex items-center justify-between">
+                <p class="text-sm text-zinc-500">แสดง {{ (currentPage - 1) * itemsPerPage + 1 }}-{{ Math.min(currentPage
+                    * itemsPerPage, totalItems) }} จาก {{ totalItems }} รายการ</p>
+                <Pagination class="mx-0! w-fit!" v-model:page="currentPage" :items-per-page="itemsPerPage"
+                    :total="totalItems" :sibling-count="1" show-edges>
+                    <PaginationContent v-slot="{ items }">
+                        <PaginationPrevious />
+                        <template v-for="(item, i) in items" :key="i">
+                            <PaginationItem v-if="item.type === 'page'" :value="item.value"
+                                :is-active="item.value === currentPage">
+                                {{ item.value }}
+                            </PaginationItem>
+                            <PaginationEllipsis v-else />
+                        </template>
+                        <PaginationNext />
+                    </PaginationContent>
+                </Pagination>
             </div>
         </div>
 
