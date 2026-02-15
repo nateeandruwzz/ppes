@@ -363,6 +363,8 @@ const formData = reactive({
     scores: {}
 })
 
+
+
 // Computed
 const periodIndicators = computed(() => {
     return indicators.value.filter(i => i.period_id == periodId.value)
